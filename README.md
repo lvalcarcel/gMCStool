@@ -22,11 +22,52 @@ gMCStool has been developed to achieve the following analysis:
 </ol>
 
 ## Run it!
-gMCStool has been developed using R and Shiny. You can clone the repository in your own computer and run locally simply by typing:
 
-```{r eval=F, echo=T}
-shiny::runApp('./app.R')
+
+gMCStool has been developed using R and Shiny. It can be launched either on the public web application of gMCStool, on a local machine using R and RShiny or within Docker. 
+
+### Web application
+
+link: [gMCStool](http://biotecnun.unav.es:8080/)
+
+### Local
+
+Clone the repository
+
+```git
+git clone https://gitlab.com/lvalcarcel/gmcstool.git
 ```
 
-The code is prepared to adjust the amount of available RAM and number of cores, based on the information of the PC. Furthermore, there are two variables to activate real-time tables in the tabs 4 and 5. A full tutorial is available in the help tab or in [TouTube](https://www.youtube.com/watch?v=k9OM2lhDHEU).
+Run RShiny
+
+```r
+shiny::runApp('app.R')
+```
+
+The code is prepared to adjust the amount of available RAM and number of cores, based on the information of the PC. Furthermore, there are two variables to activate real-time tables in the tabs 4 and 5. 
+
+#### Run gMCStool in a Docker App
+
+Run the following command:
+
+```git
+sudo docker run -p 3838:3838 lvalcarcel/gmcstool R -e 'shiny::runApp("/root/gMCStool")'
+```
+
+Now, you can point your browser to [http://localhost:3838](http://localhost:3838) and use gMCStool!
+
+
+
+## Quick start
+
+There is a complete manual of [PDF](https://github.com/lvalcarcel/gMCStool/blob/385356bd9d6aee0cc6cc23c96431155729ba36c4/instructions/gMCStool_help_tab.pdf), in the help tab of the tool or in or in [YouTube](https://www.youtube.com/watch?v=k9OM2lhDHEU).
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/k9OM2lhDHEU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<br>
+
+
+
+## Cite Us
+
+*Luis V. Valcarcel, Raquel Ordo\u00F1\U0065\U007A, I\U00F1igo Apaolaza, Ana Valcarcel, Leire Garate, Cem Meydan, Ari Melnick, Jesus San Miguel, Xabier Agirre, Felipe Prosper and  Francisco J. Planes. "gMCStool App"*
 
