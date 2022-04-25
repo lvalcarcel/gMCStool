@@ -2,7 +2,7 @@
 
 <div align="center">
     <img src="www/logo_gMCStool_2.png" alt="Welcome" style="width: 75%"/>
-    <p> #### *"A tool for discovering essential genes in cancer metabolism"* </p>
+    <p> <b> <i> A tool for discovering essential genes in cancer metabolism </i> </b> </p>
 </div>
 
 <br>
