@@ -3,11 +3,14 @@
 <p style="text-align:center;"><img src="www/logo_gMCStool_2.png" alt="Welcome" style="width: 75%"/></p>
 
 <center>
+
 #### *"A tool for discovering essential genes in cancer metabolism"*
+
 </center>
 
 
 <br>
+
 ## Welcome!
 
 We present gMCStool, a user-friedly web-tool to predict essential genes in the latest reconstruction of the human metabolism, [Human1](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7331181/), freely available in [GitHub](https://github.com/SysBioChalmers/Human-GEM). 
@@ -16,14 +19,11 @@ In order to fin metabolic vulnerabilities in cancer cells, we employ the concept
 <br>
 
 gMCStool has been developed to achieve the following analysis:
-
-**1. Find essential genes for cancer metabolism based on RNA-seq data.**
-
-**2. Predict putative companion biomarkers for predicted essential genes.** 
-
-**3. Identify essential tasks or essential metabolites associated with predicted essential genes.**
-
-<br>
+<ol>
+    <li>Find essential genes for cancer metabolism based on RNA-seq data.</li>
+    <li>Predict putative companion biomarkers for predicted essential genes.</li>
+    <li>Identify essential tasks or essential metabolites associated with predicted essential genes.</li>
+</ol>
 
 #### gMCStool has been developed using R and Shiny. 
 You can clone the repository in your own computer and run locally simply by typing:
