@@ -1,13 +1,9 @@
 # gMCStool
 
-<p style="text-align:center;"><img src="www/logo_gMCStool_2.png" alt="Welcome" style="width: 75%"/></p>
-
-<center>
-
-#### *"A tool for discovering essential genes in cancer metabolism"*
-
-</center>
-
+<div align="center">
+    <img src="www/logo_gMCStool_2.png" alt="Welcome" style="width: 75%"/>
+    <p> #### *"A tool for discovering essential genes in cancer metabolism"* </p>
+</div>
 
 <br>
 
@@ -25,8 +21,8 @@ gMCStool has been developed to achieve the following analysis:
     <li>Identify essential tasks or essential metabolites associated with predicted essential genes.</li>
 </ol>
 
-#### gMCStool has been developed using R and Shiny. 
-You can clone the repository in your own computer and run locally simply by typing:
+## Run it!
+gMCStool has been developed using R and Shiny. You can clone the repository in your own computer and run locally simply by typing:
 
 ```{r eval=F, echo=T}
 shiny::runApp('./app.R')
