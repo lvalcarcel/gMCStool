@@ -24,7 +24,7 @@ tabPanel("Overview",
          useShinyjs(),  # Set up shinyjs
          
          fluidPage(
-           includeMarkdown("instructions/gettingStarted_overview_v2.Rmd"),
+           includeMarkdown("instructions/gettingStarted_overview.Rmd"),
            
            fluidRow(column(width = 2),
                     column(width = 8,
