@@ -91,7 +91,7 @@ tabPanel(title = "2. Upload RNA-seq data",
              ),
              br(),
              div(id = "mp2",
-                 h3("Summary of the data input:"),
+                 h3("Summary of the input data:"),
                  h5("You can set here all the values for the sample class and cohort:"),
                  br(),
                  

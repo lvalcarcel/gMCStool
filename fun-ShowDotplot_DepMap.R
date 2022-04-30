@@ -88,7 +88,7 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
   sdf$isFilterSelected <- as.factor(sdf$isFilterSelected)
   
   
-  XLAB <- paste0("Minimum expression of all the maximum expressed partner genes \\[ ", sub("log2", "log_2", database_unit), " \\]")
+  XLAB <- paste0("Minimum expression of associated gMCSs partner genes \\[ ", sub("log2", "log_2", database_unit), " \\]")
   if (by_gMCS){
     if (flag_show_SYMBOL) { 
       XLAB <- paste0("Maximum expression of all partner genes: \\textit{", paste(gmcs.SYMBOL, collapse = ", "), "} \\[ ", sub("log2", "log_2", database_unit), " \\]")

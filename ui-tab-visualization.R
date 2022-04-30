@@ -44,7 +44,8 @@ tabPanel(title = "4. Visualization",
                                 selected = c("val1","val2")),
              
              
-             h4("Percentage of gene essentiality in target vs non-target class"),
+             h4(textOutput("O_txtout_perc_GEA_class")),
+             # h4("Percentage of gene essentiality in target vs non-target class"),
              sliderInput(inputId = "I_perc_GEA_class_target_filter", h5("Threshold values for essentiality in target class (disease)"), min = 0, max = 100, value = c(1,100), dragRange = F, step = 1),
              sliderInput(inputId = "I_perc_GEA_class_non_target_filter", h5("Threshold values for essentiality in non-target class (healthy)"), min = 0, max = 100, value = c(0,0), dragRange = F, step = 1),
              br(),
@@ -66,7 +67,8 @@ tabPanel(title = "4. Visualization",
              
              # Slider for Gene Essentiality Analysis filtering at gene level
              h4("Gene Essentiality Filtering"),
-             h5("Percentage of gene essentiality across samples in class: "),
+             h5(textOutput("O_txtout_title_filter")),
+             # h5("Percentage of gene essentiality across samples in class: "),
              div(id = "mp4_class_1", sliderInput(inputId = "I_perc_GEA_class_1", textOutput("O_name_GEA_class_1"),min = 0, max = 100, value = c(0,100), dragRange = F, step = 1)),  
              div(id = "mp4_class_2", sliderInput(inputId = "I_perc_GEA_class_2", textOutput("O_name_GEA_class_2"),min = 0, max = 100, value = c(0,100), dragRange = F, step = 1)),  
              div(id = "mp4_class_3", sliderInput(inputId = "I_perc_GEA_class_3", textOutput("O_name_GEA_class_3"),min = 0, max = 100, value = c(0,100), dragRange = F, step = 1)),  
@@ -133,6 +135,7 @@ tabPanel(title = "4. Visualization",
                      ),
                      div(id = "mp4_heatmap",
                          br(),
+                         h4("Visualization options:"),
                          fluidRow(
                            column(width = 3, checkboxInput(inputId = "I_include_boxplots_heatmap",
                                                            label = "Include boxplots of expression in heatmap?", value = TRUE)),

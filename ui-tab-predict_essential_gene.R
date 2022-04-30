@@ -70,7 +70,7 @@ tabPanel(title = "3. Predict Essential Genes",
                                          choiceValues = list("all_genes_HumanGEM",
                                                              "all_genes_gMCSs"), 
                                          choiceNames =  list("all genes in HumanGEM",
-                                                             "all genes in all the gMCSs"), 
+                                                             "all genes in selected gMCSs database"), 
                                          selected = "all_genes_gMCSs")#,
                             # h5("all samples are considered to be from the same cohort")
                         ),
@@ -91,7 +91,7 @@ tabPanel(title = "3. Predict Essential Genes",
              # tabsetPanel(
              # h3("Ranking of Essential Genes",
              
-             h3("Load Examples or previously calculated results:"),
+             h3("Load examples or previously calculated results:"),
              
              fluidRow(
                column(width = 6, actionButton("I_ResultsEssentiality_show_input_RDATA",

@@ -22,7 +22,7 @@
 
 tabPanel("Help",
          fluidPage(
-           includeMarkdown("instructions/gettingStarted_help.Rmd"),
+           includeMarkdown("instructions/gettingStarted_help_v4.Rmd"),
            # includeHTML("instructions/gettingStarted_help_v3.knit.html"),
            br(),
            br(),
