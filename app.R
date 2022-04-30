@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
-# You may contact the authors of this code, Luis V. Valcarcel, at <lvalcarcel@unav>
+# You may contact the authors of this code, Luis V. Valcarcel, at <lvalcarcel@alumni.unav>
 ## ==================================================================================== ##
 # Use saveRDS readRDS
 
@@ -24,12 +24,7 @@ cat("\f")
 
 # Clean all object from workspace
 rm(list = ls())
-# browser()
 
-
-# install.packages("rstudioapi")
-library(rstudioapi) # Include it in helpers.R
-setwd(dirname(getActiveDocumentContext()$path)) # Change into file directory
 
 ########################################################################################################
 #  GLOBAL
@@ -45,7 +40,7 @@ if (TRUE){ # set to false if this is goinf to be run in AWS
   num_max_samples = 1e6
 } else {
   nWorkers = 2  # Define maximum number of workers for parallel processing
-  nBytesRAM = 1.5*1000*1024*1024 # Define maximum RAM for shiny
+  nBytesRAM = 3*1000*1024*1024 # Define maximum RAM for shiny
   num_max_samples = 100
 }
 
@@ -54,32 +49,9 @@ num_max_classes = 30 # define the maximum number of classes
 RealTimeTables_mp4 = T
 RealTimeTables_mp5 = F
 
+
 # Load data  ####
-gMCS.info.raw <- list()
-gMCS.info.raw[["EssentialTasks_CultureMedium"]] <- new.env()
-load("Data/gMCSs_EssentialTasks_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_CultureMedium"]])
-gMCS.info.raw[["EssentialTasks_FullMedium"]] <- new.env()
-load("Data/gMCSs_EssentialTasks_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_FullMedium"]])
-gMCS.info.raw[["Only_CultureMedium"]] <- new.env()
-load("Data/gMCSs_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_CultureMedium"]])
-gMCS.info.raw[["Only_FullMedium"]] <- new.env()
-load("Data/gMCSs_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_FullMedium"]])
-gMCS.info.raw <- lapply(gMCS.info.raw, as.list)
-# remove unnecessary field (gMCS.ENSEMBL.list)
-gMCS.info.raw <- lapply(gMCS.info.raw, function(x){x[c("gMCSs.ENSEMBL.txt", "table.gMCSs", "gMCSs.ENSEMBL.length",
-                                                       "gMCSs.ENSEMBL.mat", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM",
-                                                       "gMCSs.ENSEMBL.txt.SYMBOL", "gMCSs.ENSEMBL")]})
-
-# generate field with reduced information
-gMCS.info.raw[["Custom_CultureMedium"]] <- gMCS.info.raw[["EssentialTasks_CultureMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
-gMCS.info.raw[["Custom_FullMedium"]] <- gMCS.info.raw[["EssentialTasks_FullMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
-
-gMCS.info.raw[["EssentialTasks_CultureMedium"]]$fullname <- "Essential Tasks and Growth on Ham's medium"
-gMCS.info.raw[["EssentialTasks_FullMedium"]]$fullname <- "Essential Tasks and Growth on unconstrained medium"
-gMCS.info.raw[["Only_CultureMedium"]]$fullname <- "Only growth on Ham's medium"
-gMCS.info.raw[["Only_FullMedium"]]$fullname <- "Only growth on unconstrained medium"
-gMCS.info.raw[["Custom_CultureMedium"]]$fullname <- "Selected metabolic tasks and growth on Ham's medium"
-gMCS.info.raw[["Custom_FullMedium"]]$fullname <- "Selected metabolic tasks and growth on unconstrained medium"
+load("./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.rdata")
 
 gMCS.info.raw <- lapply(gMCS.info.raw, as.list)
 
@@ -87,21 +59,8 @@ metTasks <- readRDS("Data/metTasks_HumanGEMv1.4.0.RDS")
 
 metsBiomass <- readRDS("Data/Metabolites_of_interest_gMCS_biomass_HumanGEMv1.4.0.RDS")
 
-
-
-DepMap.info.all <- new.env()
-load("Data/DepMap_info_genes_gMCS_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
-load("Data/DepMap_correlation_genes_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
-DepMap.info.all <- as.list(DepMap.info.all)
-DepMap.info.all <- DepMap.info.all[setdiff(names(DepMap.info.all), "DepMapEssentiality")]
-DepMap.info.all$DepMapGeneExpression <- reshape2::melt(DepMap.info.all$DepMapGeneExpression)
-colnames(DepMap.info.all$DepMapGeneExpression) <- c("ENSEMBL", "SYMBOL","DepMap_ID", "logTPM", "UNIT")
-DepMap.info.all$DepMapGeneExpression <- DepMap.info.all$DepMapGeneExpression %>% 
-  mutate(ENSEMBL = as.factor(ENSEMBL)) %>% mutate(SYMBOL = as.factor(SYMBOL)) %>% 
-  mutate(DepMap_ID = as.factor(DepMap_ID)) %>% mutate(UNIT = as.factor(UNIT))
-DepMap.info.all <- lapply(DepMap.info.all, as.data.frame)
-
-
+DepMap.info.all <- list("dictionary.CCLE" =  readRDS("./Data/DepMap_Data/dictionary.CCLE.RDS"),
+                        "DepMapCorrelationByGene" =  readRDS("./Data/DepMap_Data/DepMapCorrelationByGene.RDS"))
 
 print(paste0("running gMCStool with ",nWorkers," cores and ",round(nBytesRAM/1024/1024/1024,1)," GBs of RAM"))
 
@@ -1359,6 +1318,7 @@ server <- function(input, output, session) {
                                                  I_perc_singleTH = 1)
       # updateCheckboxInput(session, inputId = "I_isTarget_GEA_class_7", value = T)
       updateCheckboxGroupInput(session, inputId = "I_isTarget_GEA_class", choices = levels(values$sample.class), selected = c("MM"))
+      values$sample.class.target <- levels(values$sample.class)=="MM"
       flags$flag_show_table_gmcs_essentiality <- T
       flags$flag_show_table_gmcs_correlation <- T
       show_button_calculate_essentiality()
@@ -1375,6 +1335,7 @@ server <- function(input, output, session) {
                                                  I_perc_singleTH = 1)
       # updateCheckboxInput(session, inputId = "I_isTarget_GEA_class_7", value = T)
       updateCheckboxGroupInput(session, inputId = "I_isTarget_GEA_class", choices = levels(values$sample.class), selected = c("MM"))
+      values$sample.class.target <- levels(values$sample.class)=="MM"
       flags$flag_show_table_gmcs_essentiality <- T
       flags$flag_show_table_gmcs_correlation <- T
       show_button_calculate_essentiality()
@@ -1408,6 +1369,7 @@ server <- function(input, output, session) {
                                                  I_perc_singleTH = 1)
       # updateCheckboxInput(session, inputId = "I_isTarget_GEA_class_7", value = T)
       updateCheckboxGroupInput(session, inputId = "I_isTarget_GEA_class", choices = levels(values$sample.class), selected = c("MM"))
+      values$sample.class.target <- levels(values$sample.class)=="MM"
       flags$flag_show_table_gmcs_essentiality <- T
       flags$flag_show_table_gmcs_correlation <- T
       show_button_calculate_essentiality()
@@ -1424,6 +1386,7 @@ server <- function(input, output, session) {
                                                  I_perc_singleTH = 1)
       # updateCheckboxInput(session, inputId = "I_isTarget_GEA_class_7", value = T)
       updateCheckboxGroupInput(session, inputId = "I_isTarget_GEA_class", choices = levels(values$sample.class), selected = c("MM"))
+      values$sample.class.target <- levels(values$sample.class)=="MM"
       flags$flag_show_table_gmcs_essentiality <- T
       flags$flag_show_table_gmcs_correlation <- T
       show_button_calculate_essentiality()
@@ -1566,6 +1529,9 @@ server <- function(input, output, session) {
                                selected = NULL)
     })
     
+    output$O_txtout_title_filter <- renderText({"Percentage of gene essentiality across samples in class: "})
+    output$O_txtout_title_filter_bis <- renderText({"Percentage of gene essentiality across samples in class: "})
+    output$O_txtout_perc_GEA_class <- renderText({"Percentage of gene essentiality in target vs non-target class"})
     
     observeEvent(input$I_RESULT_TABLE_GMCS_MODE, {
       updateRadioButtons(session, inputId = "I_RESULT_TABLE_GMCS_MODE_bis", selected = input$I_RESULT_TABLE_GMCS_MODE)
@@ -1578,6 +1544,11 @@ server <- function(input, output, session) {
         }
         updateSliderInput(session, "I_perc_GEA_class_non_target_filter", min = 0, max = 100, value = c(0,0), step = 1)
         updateSliderInput(session, "I_perc_GEA_class_target_filter", min = 0, max = 100, value = c(1,100), step = 1)
+        # h5(textOutput("O_txtout_title_filter_bis")),
+        output$O_txtout_title_filter <- renderText({"Percentage of gene essentiality across samples in class: "})
+        output$O_txtout_title_filter_bis <- renderText({"Percentage of gene essentiality across samples in class: "})
+        output$O_txtout_perc_GEA_class <- renderText({"Percentage of gene essentiality in target vs non-target class"})
+
       } else {
         for (ii in 1:length(levels(values$sample.class))) {
           updateSliderInput(session, paste0("I_perc_GEA_class_",ii), min = 0,
@@ -1590,7 +1561,10 @@ server <- function(input, output, session) {
         # browser()
         updateSliderInput(session, "I_perc_GEA_class_non_target_filter", min = 0, max = min(table(values$sample.class)[!values$sample.class.target[1:length(levels(values$sample.class))]]), value = c(0,0), step = 1)
         updateSliderInput(session, "I_perc_GEA_class_target_filter", min = 0, max = min(table(values$sample.class)[values$sample.class.target]), value = c(1,100), step = 1)
-      }
+        output$O_txtout_title_filter <- renderText({"Number samples in which the gene is essential in class: "})
+        output$O_txtout_title_filter_bis <- renderText({"Number samples in which the gene is essential in class: "})
+        output$O_txtout_perc_GEA_class <- renderText({"Number of gene essentiality in target vs non-target class"})
+        }
     })
     
     # Update the table ####
@@ -1735,7 +1709,7 @@ server <- function(input, output, session) {
         list.gMCS.essential.aux <- list.gMCS.essential.aux %>% filter(ENSEMBL %in% list.gene.essential.aux$ENSEMBL)
         rownames(list.gMCS.essential.aux) <- 1:nrow(list.gMCS.essential.aux)
         print(head(rownames(list.gMCS.essential.aux)))
-        values$list.gMCS.essential.filtered <- list.gMCS.essential.aux
+        values$list.gMCS.essential.filtered <- list.gMCS.essential.aux %>% dplyr::select(-c("task"))
         if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
           ResultsGMCSsTable <- datatable(values$list.gMCS.essential.filtered, filter = "top", selection = "single", rownames = F,
                                          options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))
@@ -1808,6 +1782,7 @@ server <- function(input, output, session) {
                        # values$plot.obj <- show_heatmap()
                        if (input$I_TH_METHOD %in% c("gmcsTH", "singleTH")){
                          print("start ShowHeatmap_gmcsTH")
+                         # print(values$sample.class.target)
                          values$plot.obj <- ShowHeatmap_gmcsTH(values$gene.exp,
                                                                values$ResultsEssentiality$gene.ratio,
                                                                gMCS.info$selected,
@@ -2116,28 +2091,32 @@ server <- function(input, output, session) {
     
     
     # Filter the data only when selected, to save computer power
+    # load the data when it is needed
     filter_DepMap_tables <- function(){
       # browser()
-      
-      values$DepMap.info.filtered$DepMapEssentialityByGene <- DepMap.info.all$DepMapEssentialityByGene %>%
-        filter(essentiality.database==input$I_DepMap_database) %>%
+
+      values$DepMap.info.filtered$DepMapEssentialityByGene <- readRDS(paste0("./Data/DepMap_Data/DepMapEssentialityByGene_",
+                                                                             input$I_DepMap_database,".RDS")) %>%
+        # filter(essentiality.database==input$I_DepMap_database) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-      
-      values$DepMap.info.filtered$DepMapExpressionByGene <- DepMap.info.all$DepMapExpressionByGene %>%
+
+      values$DepMap.info.filtered$DepMapExpressionByGene <- readRDS(paste0("./Data/DepMap_Data/DepMapExpressionByGene_",
+                                                                           input$I_DepMap_GMCS_LIST,"_",input$I_DepMap_unit,".RDS")) %>%
+        # filter(gMCS.database==input$I_DepMap_GMCS_LIST) %>%
+        # filter(UNIT==input$I_DepMap_unit) %>%
+        filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
+
+      values$DepMap.info.filtered$DepMapCorrelationByGene <- readRDS("./Data/DepMap_Data/DepMapCorrelationByGene.RDS") %>%
         filter(gMCS.database==input$I_DepMap_GMCS_LIST) %>%
-        filter(UNIT==input$I_DepMap_unit) %>%
-        filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-      
-      values$DepMap.info.filtered$DepMapCorrelationByGene <- DepMap.info.all$DepMapCorrelationByGene %>%
-        filter(gMCS.database==input$I_DepMap_GMCS_LIST) %>%
         filter(essentiality.database==input$I_DepMap_database) %>%
         filter(UNIT==input$I_DepMap_unit) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-      
-      values$DepMap.info.filtered$DepMapGeneExpression <- DepMap.info.all$DepMapGeneExpression %>%
-        filter(UNIT==input$I_DepMap_unit) %>%
+
+      values$DepMap.info.filtered$DepMapGeneExpression <- readRDS(file = paste0("./Data/DepMap_Data/DepMapEssentialityByGene_",input$I_DepMap_database,".RDS")) %>%
+        # filter(UNIT==input$I_DepMap_unit) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
     }
+    
     
     # hide all the results if something has changed
     observeEvent(c(input$I_DepMap_database,
