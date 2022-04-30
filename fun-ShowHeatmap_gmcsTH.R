@@ -4,7 +4,7 @@ ShowHeatmap_gmcsTH <- function(gene.exp, gene.ratio, gMCS.info.all, gMCS.info.ta
   
   colors_annotation <- list(rainbow, scales::hue_pal(), scales::hue_pal())[[as.numeric(as.character(colors_annotation))]]
   sample.class.target <- sample.class.target[1:length(levels(sample.class))]
-  
+  sample.class.target[is.na(sample.class.target)] <- F
   
   # extract the neccesary info from the target
   gen.ENSEMBL <- gMCS.info.target$ENSEMBL
