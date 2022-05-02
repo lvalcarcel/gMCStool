@@ -2178,15 +2178,28 @@ server <- function(input, output, session) {
           # END[2] <- Sys.time()
           
           # browser()
+          # aux <- merge(na.omit(aux2) %>% select("DepMap_ID", "essentiality_score","ENSEMBL"),
+          #              na.omit(aux3) %>% select("DepMap_ID", "logTPM",  "ENSEMBL")) %>%
+          #   as_tibble() %>% 
+          #   group_by(ENSEMBL) %>%
+          #   # multidplyr::partition(cluster = cluster_multidplyr) %>% #cluster_library("dplyr") %>% cluster_library("rstatix") %>%
+          #   cor_test(essentiality_score, logTPM) %>% adjust_pvalue(method = "fdr") %>%
+          #   # collect() %>% as_tibble() %>%
+          #   rename(ENSEMBL = ENSEMBL) %>% rename(rho = cor) %>% rename(p.value = p)  %>%
+          #   dplyr::select(ENSEMBL, rho, p.value, p.adj)
+          
           aux <- merge(na.omit(aux2) %>% select("DepMap_ID", "essentiality_score","ENSEMBL"),
-                       na.omit(aux3) %>% select("DepMap_ID", "logTPM",  "ENSEMBL")) %>%
-            as_tibble() %>% 
-            group_by(ENSEMBL) %>%
-            # multidplyr::partition(cluster = cluster_multidplyr) %>% #cluster_library("dplyr") %>% cluster_library("rstatix") %>%
-            cor_test(essentiality_score, logTPM) %>% adjust_pvalue(method = "fdr") %>%
-            # collect() %>% as_tibble() %>%
-            rename(ENSEMBL = ENSEMBL) %>% rename(rho = cor) %>% rename(p.value = p)  %>%
-            dplyr::select(ENSEMBL, rho, p.value, p.adj)
+                       na.omit(aux3) %>% select("DepMap_ID", "logTPM",  "ENSEMBL")) 
+          aux <- split(aux, as.character(aux$ENSEMBL))
+          op <- options(warn = (-1)) # suppress warnings
+          aux <- sapply(aux, function(z){cor.test(z$essentiality_score, z$logTPM)[c("estimate", "p.value")]})
+          options(op) # reset the default value, if you want
+          aux <- aux %>% as.data.frame() %>% t() %>% as.data.frame() %>% 
+            mutate(estimate = as.numeric(estimate)) %>% mutate(p.value = as.numeric(p.value)) %>%
+            tibble::rownames_to_column("ENSEMBL") %>%  as_tibble() %>%
+            rename(rho = estimate) %>% adjust_pvalue(method = "fdr") %>%
+            rename(p.adj = p.value.adj) %>% dplyr::select(ENSEMBL, rho, p.value, p.adj)
+          
           print("Calculate new correlations based on selected data: 4/4")
         } else {
           aux = values$DepMap.info.filtered$DepMapCorrelationByGene %>%
