@@ -67,5 +67,6 @@ There is a complete manual of [PDF](https://github.com/lvalcarcel/gMCStool/blob/
 
 ## Cite Us
 
-*Luis V. Valcarcel, Raquel Ordoñez, Iñigo Apaolaza, Ana Valcarcel, Leire Garate, Cem Meydan, Ari Melnick, Jesus San Miguel, Xabier Agirre, Felipe Prosper and  Francisco J. Planes. "gMCStool App"*
+
+*Luis V. Valcárcel, Edurne San José-Enériz, Raquel Ordoñez, Iñigo Apaolaza, Ana Valcárcel, Leire Garate, Jesús San Miguel, Antonio Pineda-Lucena, Xabier Agirre, Felipe Prósper, Francisco J. Planes.. "gMCStool App"*
 
