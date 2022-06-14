@@ -28,7 +28,7 @@ gMCStool has been developed using R and Shiny. It can be launched either on the 
 
 ### Web application
 
-link: [gMCStool](http://biotecnun.unav.es:8080/)
+link: [gMCStool](https://biotecnun.unav.es/app/gmcstool)
 
 ### Local
 
