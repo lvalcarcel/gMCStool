@@ -19,7 +19,7 @@
 ## ==================================================================================== ##
 
 
-tabPanel(title = "3. Predict Essential Genes",
+tabPanel(title = "3. Predict Essential Genes and DKOs",
          
          sidebarLayout(
            # Sidebar
@@ -51,10 +51,10 @@ tabPanel(title = "3. Predict Essential Genes",
                         h3("Gene expression thresholding method"),
                         radioButtons(inputId = "I_TH_METHOD", label = "Select one:", 
                                      # change the comments to implement singleTH
-                                     # choiceValues = list("gmcsTH", "localT2","singleTH"),  
-                                     # choiceNames =  list("gmcsTH", "localT2","singleTH"), 
-                                     choiceValues = list("gmcsTH", "localT2"), 
-                                     choiceNames =  list("gmcsTH", "localT2"),
+                                     choiceValues = list("gmcsTH", "localT2","singleTH", "fastcormics"),
+                                     choiceNames =  list("gmcsTH", "localT2","singleTH", "fastcormics"),
+                                     # choiceValues = list("gmcsTH", "localT2"), 
+                                     # choiceNames =  list("gmcsTH", "localT2"),
                                      selected = "gmcsTH"),
                         
                         # depending on the thresholding technology, show a different menu
@@ -79,12 +79,56 @@ tabPanel(title = "3. Predict Essential Genes",
                                          label = "Numeric value of expression threshold", 
                                          value = 1)
                         ),
+                        div(id = "I_perc_fastcormics_show", 
+                            checkboxInput(inputId = "I_perc_fastcormics", 
+                                          label = "Should the data be log2 transformed for the threshold?", 
+                                          value = TRUE)
+                        ),
                         
                         
-                        actionButton("I_action_predictEssentialGene", "Calculate!", width = '100%',heigth = '200%',
+                        div(id = "I_hide_advance_settings_calculate_GEA", 
+                            actionButton("I_action_show_advance_settings_calculate_GEA",
+                                         "Advance settings",
+                                         width = '100%',heigth = '100%',
+                                         style="color: #ffffff; background-color: #333333; border-color: #ffffff")
+                        ),
+                        
+                        div(id = "I_show_advance_settings_calculate_GEA", 
+                            actionButton("I_action_hide_advance_settings_calculate_GEA",
+                                         "Hide advance settings",
+                                         width = '100%',heigth = '100%',
+                                         style="color: #ffffff; background-color: #333333; border-color: #ffffff"),
+                            
+                            selectInput("I_GEA_settings_simplify", 
+                                        h5("Select the simplification of gMCS along tasks:"),
+                                        choices = list("None simplification" = 0,
+                                                       "Simple simplification" = 1,
+                                                       "Complete simplification" = 2),
+                                        selected = "None simplification"),
+                            
+                            numericInput("I_GEA_settings_threshold_logFC", 
+                                         h5("Select threshold_logFC to consider a gene as ON:"),
+                                         1e-3),
+                            
+                            numericInput("I_GEA_settings_nWorkers", 
+                                         h5("Select the number of cores:"),
+                                         nWorkers, min = 0, max = nWorkers),
+                            
+                        ),
+                        
+                        
+                        br(),
+                        actionButton("I_action_predictEssentialGene", "Calculate single KO!", width = '100%',heigth = '200%',
                                      style=STYLE_NEXT_BUTTONS), # Look for text redistribution inside the actionButton !!!!!!!!!!!!!
                         tags$head(tags$style(type = "text/css",".btn-default { background-image: none;}")),
-                        tags$head(tags$style(type = "text/css",".btn-default:hover { background-image: none;}"))
+                        tags$head(tags$style(type = "text/css",".btn-default:hover { background-image: none;}")),
+                        
+                        br(), br(), 
+                        actionButton("I_action_predictEssentialPairGene", "Calculate double KO!", width = '100%',heigth = '200%',
+                                     style=STYLE_NEXT_BUTTONS), # Look for text redistribution inside the actionButton !!!!!!!!!!!!!
+                        tags$head(tags$style(type = "text/css",".btn-default { background-image: none;}")),
+                        tags$head(tags$style(type = "text/css",".btn-default:hover { background-image: none;}")),
+                        
            ),
            # Main panel
            mainPanel(# co_FDR = 0.4, co_log2FC = 2
@@ -143,12 +187,22 @@ tabPanel(title = "3. Predict Essential Genes",
              div(id = "mp3",
                  h3("Results of Gene Essentiality Analysis:"),
                  br(),
-                 radioButtons(inputId = "I_RESULT_TABLE_MODE", label = "Select:", 
-                              choiceValues = list("number",
-                                                  "percentage"), 
-                              choiceNames =  list("number",
-                                                  "percentage"), 
-                              selected = "percentage", inline = TRUE),
+                 fluidRow(
+                   column(width = 6, selectInput(inputId = "I_RESULT_TABLE_SINGLE_DOUBLE",
+                                                 label = "Select which results to show:", 
+                                                 choices =  list("Single KO", "Double KO (only)", "Double KO + single KOs"), 
+                                                 selected = "Single KO")
+                   ),
+                   column(width = 6, radioButtons(inputId = "I_RESULT_TABLE_MODE", 
+                                                  label = "Select visualization mode:", 
+                                                  choiceValues = list("number",
+                                                                      "percentage"), 
+                                                  choiceNames =  list("number",
+                                                                      "percentage"), 
+                                                  selected = "percentage", inline = TRUE)
+                   ),
+                 ),
+                 
                  br(),
                  div(withSpinner(DT::dataTableOutput(outputId = "O_table_essential_genes")), style = "font-size: 95%; width: 100%"),
                  br(),

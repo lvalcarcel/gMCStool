@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
-# You may contact the authors of this code, Luis V. Valcarcel, at <lvalcarcel@alumni.unav>
+# You may contact the authors of this code, Luis V. Valcarcel, at <lvalcarcel@unav>
 ## ==================================================================================== ##
 # Use saveRDS readRDS
 
@@ -24,22 +24,26 @@ cat("\f")
 
 # Clean all object from workspace
 rm(list = ls())
+# browser()
 
 
+# install.packages("rstudioapi")
+# library(rstudioapi) # Include it in helpers.R
+# setwd(dirname(getActiveDocumentContext()$path)) # Change into file directory
+
 ########################################################################################################
-#  GLOBAL
-########################################################################################################
+#  GLOBAL   ####
 
 source("helpers.R") # Here, all the libraries and scripts needed are loaded
 
-if (TRUE){ # set to false if this is goinf to be run in AWS
+if (FALSE){ # set to false if this is goinf to be run in AWS
   nWorkers = parallel::detectCores()-2  # Define maximum number of workers for parallel processing
   nBytesRAM = 4*1024*1024*1024
   nBytesRAM_OS = 8*1024*1024*1024
   nBytesRAM = max(nBytesRAM, benchmarkme::get_ram()-nBytesRAM_OS)  # Define maximum RAM for shiny
   num_max_samples = 1e6
 } else {
-  nWorkers = 2  # Define maximum number of workers for parallel processing
+  nWorkers = 1  # Define maximum number of workers for parallel processing
   nBytesRAM = 3*1000*1024*1024 # Define maximum RAM for shiny
   num_max_samples = 100
 }
@@ -49,24 +53,87 @@ num_max_classes = 30 # define the maximum number of classes
 RealTimeTables_mp4 = T
 RealTimeTables_mp5 = F
 
+# # Load data  ####
+# # START1 <- Sys.time()
+# gMCS.info.raw <- list()
+# gMCS.info.raw[["EssentialTasks_CultureMedium"]] <- new.env()
+# load("Data/gMCSs_EssentialTasks_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_CultureMedium"]])
+# gMCS.info.raw[["EssentialTasks_FullMedium"]] <- new.env()
+# load("Data/gMCSs_EssentialTasks_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_FullMedium"]])
+# gMCS.info.raw[["Only_CultureMedium"]] <- new.env()
+# load("Data/gMCSs_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_CultureMedium"]])
+# gMCS.info.raw[["Only_FullMedium"]] <- new.env()
+# load("Data/gMCSs_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_FullMedium"]])
+# gMCS.info.raw <- lapply(gMCS.info.raw, as.list)
+# # remove unnecessary field (gMCS.ENSEMBL.list)
+# gMCS.info.raw <- lapply(gMCS.info.raw, function(x){x[c("gMCSs.ENSEMBL.txt", "table.gMCSs", "gMCSs.ENSEMBL.length",
+#                                                        "gMCSs.ENSEMBL.mat", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM",
+#                                                        "gMCSs.ENSEMBL.txt.SYMBOL", "gMCSs.ENSEMBL")]})
+# 
+# # generate field with reduced information
+# gMCS.info.raw[["Custom_CultureMedium"]] <- gMCS.info.raw[["EssentialTasks_CultureMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
+# gMCS.info.raw[["Custom_FullMedium"]] <- gMCS.info.raw[["EssentialTasks_FullMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
+# 
+# gMCS.info.raw[["EssentialTasks_CultureMedium"]]$fullname <- "Essential Tasks and Growth on Ham's medium"
+# gMCS.info.raw[["EssentialTasks_FullMedium"]]$fullname <- "Essential Tasks and Growth on unconstrained medium"
+# gMCS.info.raw[["Only_CultureMedium"]]$fullname <- "Only growth on Ham's medium"
+# gMCS.info.raw[["Only_FullMedium"]]$fullname <- "Only growth on unconstrained medium"
+# gMCS.info.raw[["Custom_CultureMedium"]]$fullname <- "Selected metabolic tasks and growth on Ham's medium"
+# gMCS.info.raw[["Custom_FullMedium"]]$fullname <- "Selected metabolic tasks and growth on unconstrained medium"
+# 
+# END1 <- Sys.time()
+# 
+# save(gMCS.info.raw, file = "./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.rdata", compress = "xz", compression_level = 9)
+
 
 # Load data  ####
-load("./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.rdata")
+START2 <- Sys.time()
+load("./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.Rdata")
+END2 <- Sys.time()
+
+
+format(object.size(gMCS.info.raw), units = "auto")
+sapply(gMCS.info.raw, function(x) format(object.size(x), units = "auto"))
+sapply(gMCS.info.raw[[1]], function(x) format(object.size(x), units = "auto"))
 
 gMCS.info.raw <- lapply(gMCS.info.raw, as.list)
 
 metTasks <- readRDS("Data/metTasks_HumanGEMv1.4.0.RDS")
+gMCS.info.raw.rawData <- readRDS("Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL_raw.RDS")
 
 metsBiomass <- readRDS("Data/Metabolites_of_interest_gMCS_biomass_HumanGEMv1.4.0.RDS")
 
+
+# START3 <- Sys.time()
+# DepMap.info.all <- new.env()
+# load("Data/DepMap_info_genes_gMCS_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
+# load("Data/DepMap_correlation_genes_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
+# DepMap.info.all <- as.list(DepMap.info.all)
+# DepMap.info.all <- DepMap.info.all[setdiff(names(DepMap.info.all), "DepMapEssentiality")]
+# DepMap.info.all$DepMapGeneExpression <- reshape2::melt(DepMap.info.all$DepMapGeneExpression)
+# colnames(DepMap.info.all$DepMapGeneExpression) <- c("ENSEMBL", "SYMBOL","DepMap_ID", "logTPM", "UNIT")
+# DepMap.info.all$DepMapGeneExpression <- DepMap.info.all$DepMapGeneExpression %>% 
+#   mutate(ENSEMBL = as.factor(ENSEMBL)) %>% mutate(SYMBOL = as.factor(SYMBOL)) %>% 
+#   mutate(DepMap_ID = as.factor(DepMap_ID)) %>% mutate(UNIT = as.factor(UNIT))
+# DepMap.info.all <- lapply(DepMap.info.all, as.data.frame)
+# 
+
 DepMap.info.all <- list("dictionary.CCLE" =  readRDS("./Data/DepMap_Data/dictionary.CCLE.RDS"),
                         "DepMapCorrelationByGene" =  readRDS("./Data/DepMap_Data/DepMapCorrelationByGene.RDS"))
+# END3 <- Sys.time()
+
+
+# END1 - START1
+# END2 - START2
+# END3 - START3
+
+# (END1 - START1) + END3 - START3 
 
 print(paste0("running gMCStool with ",nWorkers," cores and ",round(nBytesRAM/1024/1024/1024,1)," GBs of RAM"))
 
 ########################################################################################################
-#  USER INTERFACE
-########################################################################################################
+#  USER INTERFACE ####
+
 
 # Options for Spinner
 options(spinner.color="#0275D8", spinner.color.background="#ffffff", spinner.size=2)
@@ -153,6 +220,8 @@ server <- function(input, output, session) {
   showElement("mp5")
   
   hideElement("mp_gMCS_GMCS_LIST_max_length") # to be included later on with the paper of Danel
+  hideElement("I_show_advance_settings_calculate_GEA")
+  
   
   # generate hidden variables
   flags <- reactiveValues(flag_show_summary_data = F,
@@ -220,7 +289,7 @@ server <- function(input, output, session) {
   },ignoreInit = TRUE)
   # 1) Change from Data Upload to Gene Essentially Analysis
   observeEvent(c(input$I_mp2_next),{
-    updateTabsetPanel(session, "gMCStool", selected = "3. Predict Essential Genes")
+    updateTabsetPanel(session, "gMCStool", selected = "3. Predict Essential Genes and DKOs")
   },ignoreInit = TRUE)
   # 1) Change from Gene Essentially Analysis to Case by Case
   observeEvent(c(input$I_mp3_next),{
@@ -380,7 +449,7 @@ server <- function(input, output, session) {
         gMCS.info$selected$gMCSs.ENSEMBL.length <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.ENSEMBL.length[idx2]
         # gMCS.info$selected$gMCSs.ENSEMBL.list <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.ENSEMBL.list[idx2]
         gMCS.info$selected$gMCSs.ENSEMBL.mat <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.ENSEMBL.mat[idx2,]
-        gMCS.info$selected$gMCSs.ENSEMBL.txt.SYMBOL <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.ENSEMBL.txt.SYMBOL[idx2]
+        gMCS.info$selected$gMCSs.SYMBOL.txt <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.SYMBOL.txt[idx2]
         gMCS.info$selected$gMCSs.ENSEMBL <- gMCS.info.raw[[origin_I_GMCS_LIST]]$gMCSs.ENSEMBL[idx1]
         
         # change a little bit the gMCS table for the new index
@@ -431,7 +500,7 @@ server <- function(input, output, session) {
         gMCS.info$selected$gMCSs.ENSEMBL.length <- gMCS.info$selected$gMCSs.ENSEMBL.length[idx2]
         # gMCS.info$selected$gMCSs.ENSEMBL.list <- gMCS.info$selected$gMCSs.ENSEMBL.list[idx2]
         gMCS.info$selected$gMCSs.ENSEMBL.mat <- gMCS.info$selected$gMCSs.ENSEMBL.mat[idx2,]
-        gMCS.info$selected$gMCSs.ENSEMBL.txt.SYMBOL <- gMCS.info$selected$gMCSs.ENSEMBL.txt.SYMBOL[idx2]
+        gMCS.info$selected$gMCSs.SYMBOL.txt <- gMCS.info$selected$gMCSs.SYMBOL.txt[idx2]
         
         # change a little bit the gMCS table for the new index
         gMCS.info$selected$table.gMCSs$idx <- match(gMCS.info$selected$table.gMCSs$idx, which(idx2))
@@ -451,10 +520,11 @@ server <- function(input, output, session) {
     req(tree)
     selected_tasks <- unlist(get_selected(tree))[grepl("^\\[", unlist(get_selected(tree)))]
     
+    # browser()
     Selected_metabolic_tasks <- data.frame("task number" = metTasks[[values$I_GMCS_LIST]][,1],
                                            "task name" = metTasks[[values$I_GMCS_LIST]][,2],
                                            "task group" = metTasks[[values$I_GMCS_LIST]][,3],
-                                           "num gMCSs" = unlist(lapply(gMCS.info$selected$gMCSs.ENSEMBL,nrow)))
+                                           "num gMCSs" = lengths(gMCS.info.raw.rawData[metTasks[[values$I_GMCS_LIST]]$ID]))
     rownames(Selected_metabolic_tasks) <- 1:nrow(Selected_metabolic_tasks)
     
     Selected_metabolic_tasks <- Selected_metabolic_tasks[ Selected_metabolic_tasks[,"task.name"] %in% selected_tasks,]
@@ -620,7 +690,11 @@ server <- function(input, output, session) {
                  })
   
   output$O_gMCS_database_download <- downloadHandler(filename = paste0("gMCStool_selected_gMCSs_", format(Sys.time(), "%Y_%m_%d_%Hh%Mm"), ".Rdata"), 
-                                                     content = function(fname){gMCS.info <- gMCS.info$selected; save(gMCS.info, file = fname)})
+                                                     content = function(fname){
+                                                       gMCS.info <- gMCS.info$selected
+                                                       gMCS.info$gmcs.ENSEMBL <- gMCS.info.raw.rawData[metTasks[[values$I_GMCS_LIST]]$ID]
+                                                       save(gMCS.info, file = fname)
+                                                     })
   
   
   # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -1115,15 +1189,33 @@ server <- function(input, output, session) {
         showElement("I_perc_localT2_show")
         hideElement("I_perc_gmcsTH_show")
         hideElement("I_perc_singleTH_show")
+        hideElement("I_perc_fastcormics_show")
       } else if (input$I_TH_METHOD=="gmcsTH"){
         hideElement("I_perc_localT2_show")
         showElement("I_perc_gmcsTH_show")
         hideElement("I_perc_singleTH_show")
+        hideElement("I_perc_fastcormics_show")
       } else if (input$I_TH_METHOD=="singleTH"){
         hideElement("I_perc_localT2_show")
         hideElement("I_perc_gmcsTH_show")
         showElement("I_perc_singleTH_show")
+        hideElement("I_perc_fastcormics_show")
+      } else if (input$I_TH_METHOD=="fastcormics"){
+        showElement("I_perc_localT2_show")
+        hideElement("I_perc_gmcsTH_show")
+        hideElement("I_perc_singleTH_show")
+        showElement("I_perc_fastcormics_show")
       } 
+    })
+    
+    observeEvent(input$I_action_show_advance_settings_calculate_GEA, {
+      hideElement("I_hide_advance_settings_calculate_GEA")
+      showElement("I_show_advance_settings_calculate_GEA")
+    })
+    
+    observeEvent(input$I_action_hide_advance_settings_calculate_GEA, {
+      showElement("I_hide_advance_settings_calculate_GEA")
+      hideElement("I_show_advance_settings_calculate_GEA")
     })
     
     # sincronize text and slider 
@@ -1145,6 +1237,7 @@ server <- function(input, output, session) {
       hideElement("mp3_ResultsEssentiality_input_RDATA")
       hideElement("mp3_ResultsEssentiality_input_example")
     })
+    
     # run the calculation of essential genes ####
     observeEvent(input$I_action_predictEssentialGene,{
       # updateDataTable <<- 1
@@ -1160,29 +1253,38 @@ server <- function(input, output, session) {
           # browser()
           values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
           values$O_txtout_I_TH_METHOD <- paste0("gmcsTH (", input$I_perc_gmcsTH*100, "%)")
-          ResultsEssentiality <- CalculateEssentialGenes_gmcsTH(gene.exp = values$gene.exp,
-                                                                gMCS.info = gMCS.info$selected,
-                                                                sample.class = values$sample.class,
-                                                                gmcsTH_perc = input$I_perc_gmcsTH, 
-                                                                nWorkers = nWorkers)
         } else if (input$I_TH_METHOD=="localT2") {
           values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
           values$O_txtout_I_TH_METHOD <- paste0("localT2 (", input$I_perc_localT2, ")")
-          ResultsEssentiality <- CalculateEssentialGenes_localT2(gene.exp = values$gene.exp,
-                                                                 gMCS.info = gMCS.info$selected,
-                                                                 sample.class = values$sample.class,
-                                                                 sample.cohort = values$sample.cohort,
-                                                                 localT2_mode = input$I_perc_localT2,
-                                                                 nWorkers = nWorkers)
         } else if (input$I_TH_METHOD=="singleTH") {
           values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
           values$O_txtout_I_TH_METHOD <- paste0("singleTH (", input$I_perc_singleTH, ")")
-          ResultsEssentiality <- CalculateEssentialGenes_singleTH(gene.exp = values$gene.exp,
-                                                                  gMCS.info = gMCS.info$selected,
-                                                                  sample.class = values$sample.class,
-                                                                  singleTH = input$I_perc_singleTH,
-                                                                  nWorkers = nWorkers)
+          updateNumericInput(session, inputId = "I_show_boxplots_hline", value = input$I_perc_singleTH)
+        } else if (input$I_TH_METHOD=="fastcormics") {
+          values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+          values$O_txtout_I_TH_METHOD <- paste0("fastcormics (", input$I_perc_localT2, ")")
         }
+        
+        
+        ResultsEssentiality <- CalculateEssentialGenes(gene.exp = values$gene.exp, # gene expression
+                                                       gMCS.info = gMCS.info$selected, # gMCS information
+                                                       sample.class = values$sample.class,
+                                                       sample.cohort = values$sample.cohort, #metadata of the samples
+                                                       threshold_logFC = input$I_GEA_settings_threshold_logFC,
+                                                       isShiny = T, # to use the tool inside and outside the shiny app
+                                                       parallel.nCores = input$I_GEA_settings_nWorkers, # if gmcsTH, decide to use parallel processing or not
+                                                       parallel.mode =  "FORK",
+                                                       thresholding_methodology = input$I_TH_METHOD, # How to calculate the threshold
+                                                       log2.fastcormics = input$I_perc_fastcormics, # should we consider log2 in fastcormics distribution calculation?
+                                                       gmcsTH_perc = input$I_perc_gmcsTH, singleTH = input$I_perc_singleTH, # data to calculate threshold
+                                                       genes.in.set = rownames(gene.exp), # information to limit the genes used in localT2
+                                                       calculateDoubleKO = F, # Should the code calculate single or double KO?
+                                                       CompleteResultsDoubleKO = T, # include the list of KO with gMCS. If False, only the matrix and summary table are calculated
+                                                       CompleteResultsSimpleKO = T, # include the list of KO with gMCS. If False, only the matrix and summary table are calculated
+                                                       SimplifyGMCS = as.numeric(input$I_GEA_settings_simplify) # Simplify database of gMCSs
+        )
+        
+        
         # reorder results to have first genes more essential in all samples
         idx <- order(apply(ResultsEssentiality$ratio.essential.gene[,levels(values$sample.class)],1,mean), decreasing = T)  
         ResultsEssentiality$num.essential.gene <- ResultsEssentiality$num.essential.gene[idx,]
@@ -1206,6 +1308,112 @@ server <- function(input, output, session) {
         # update and store results
         values$ResultsEssentiality <- ResultsEssentiality
         
+        # change the visualization of tables
+        updateSelectInput(inputId = "I_RESULT_TABLE_SINGLE_DOUBLE",
+                          choices =  list("Single KO"), 
+                          selected = "Single KO")
+        updateSelectInput(inputId = "I_RESULT_TABLE_GMCS_SINGLE_DOUBLE",
+                          choices =  list("Single KO"), 
+                          selected = "Single KO")
+        
+        # Change Flags
+        flags$flag_show_table_essentiality <- T
+        flags$flag_show_table_gmcs_essentiality <- T
+        flags$flag_show_table_gmcs_correlation <- T
+        hideElement("mp3_loading")
+      }
+    })
+    
+    
+    # run the calculation of essential genes ####
+    observeEvent(input$I_action_predictEssentialPairGene,{
+      # updateDataTable <<- 1
+      # source("fun-CalculateEssentialGenes_gmcsTH.R")
+      # browser()
+      if (!is.null(values$gene.exp) & !is.null(values$sample.class) & !is.null(values$sample.cohort)){
+        
+        hideElement("mp3")
+        showElement("mp3_loading")
+        flags$flag_show_table_essentiality <- F
+        
+        if (input$I_TH_METHOD=="gmcsTH"){
+          # browser()
+          values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+          values$O_txtout_I_TH_METHOD <- paste0("gmcsTH (", input$I_perc_gmcsTH*100, "%)")
+        } else if (input$I_TH_METHOD =="localT2") {
+          values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+          values$O_txtout_I_TH_METHOD <- paste0("localT2 (", input$I_perc_localT2, ")")
+        } else if (input$I_TH_METHOD =="singleTH") {
+          values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+          values$O_txtout_I_TH_METHOD <- paste0("singleTH (", input$I_perc_singleTH, ")")
+        } else if (input$I_TH_METHOD =="fastcormics") {
+          values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+          values$O_txtout_I_TH_METHOD <- paste0("fastcormics (", input$I_perc_localT2, ")")
+        }
+        
+        if (input$I_perc_localT2 == "") {
+          genes.in.set <- rownames(gene.exp)
+        } else {
+          genes.in.set <- gMCS.info$selected$genes.gMCSs.ENSEMBL
+        }
+        ResultsEssentiality <- CalculateEssentialGenes(gene.exp = values$gene.exp, # gene expression
+                                                       gMCS.info = gMCS.info$selected, # gMCS information
+                                                       sample.class = values$sample.class,
+                                                       sample.cohort = values$sample.cohort, #metadata of the samples
+                                                       threshold_logFC = input$I_GEA_settings_threshold_logFC,
+                                                       isShiny = T, # to use the tool inside and outside the shiny app
+                                                       parallel.nCores = input$I_GEA_settings_nWorkers, # if gmcsTH, decide to use parallel processing or not
+                                                       parallel.mode =  "FORK",
+                                                       thresholding_methodology = input$I_TH_METHOD, # How to calculate the threshold
+                                                       log2.fastcormics = input$I_perc_fastcormics, # should we consider log2 in fastcormics distribution calculation?
+                                                       gmcsTH_perc = input$I_perc_gmcsTH, singleTH = input$I_perc_singleTH, # data to calculate threshold
+                                                       genes.in.set = rownames(gene.exp), # information to limit the genes used in localT2
+                                                       calculateDoubleKO = T, # Should the code calculate single or double KO?
+                                                       CompleteResultsDoubleKO = T, # include the list of KO with gMCS. If False, only the matrix and summary table are calculated
+                                                       CompleteResultsSimpleKO = T, # include the list of KO with gMCS. If False, only the matrix and summary table are calculated
+                                                       SimplifyGMCS = as.numeric(input$I_GEA_settings_simplify) # Simplify database of gMCSs
+        )
+        
+        
+        # reorder results to have first genes more essential in all samples
+        idx <- order(apply(ResultsEssentiality$ratio.essential.gene[,levels(values$sample.class)],1,mean), decreasing = T)  
+        ResultsEssentiality$num.essential.gene <- ResultsEssentiality$num.essential.gene[idx,]
+        ResultsEssentiality$ratio.essential.gene <- ResultsEssentiality$ratio.essential.gene[idx,]
+        
+        idx <- order(apply(ResultsEssentiality$ratio.essential.pair.gene[,levels(values$sample.class)],1,mean), decreasing = T)  
+        ResultsEssentiality$num.essential.pair.gene <- ResultsEssentiality$num.essential.pair.gene[idx,]
+        ResultsEssentiality$ratio.essential.pair.gene <- ResultsEssentiality$ratio.essential.pair.gene[idx,]
+        
+        # eliminate rownames in tables, not informative
+        rownames(ResultsEssentiality$num.essential.gene) <- 1:nrow(ResultsEssentiality$num.essential.gene)
+        rownames(ResultsEssentiality$ratio.essential.gene) <- 1:nrow(ResultsEssentiality$ratio.essential.gene)
+        rownames(ResultsEssentiality$num.essential.pair.gene) <- 1:nrow(ResultsEssentiality$num.essential.pair.gene)
+        rownames(ResultsEssentiality$ratio.essential.pair.gene) <- 1:nrow(ResultsEssentiality$ratio.essential.pair.gene)
+        
+        # save parameters of calculation
+        ResultsEssentiality$options <- list(
+          I_GMCS_LIST = values$I_GMCS_LIST,
+          I_GMCS_LIST_selected_tasks = metTasks[[values$I_GMCS_LIST]]$DESCRIPTION,
+          I_GMCS_LIST_max_length = max(gMCS.info$selected$gMCSs.ENSEMBL.length),
+          I_TH_METHOD = input$I_TH_METHOD,
+          I_perc_gmcsTH = input$I_perc_gmcsTH,
+          I_perc_localT2 = input$I_perc_localT2,
+          I_perc_singleTH = input$I_perc_singleTH
+        )
+        # browser()
+        
+        # update and store results
+        values$ResultsEssentiality <- ResultsEssentiality
+        
+        # change the visualization of tables
+        updateSelectInput(inputId = "I_RESULT_TABLE_SINGLE_DOUBLE",
+                          choices =  list("Single KO", "Double KO (only)", "Double KO + single KOs"), 
+                          selected = "Single KO")
+        updateSelectInput(inputId = "I_RESULT_TABLE_GMCS_SINGLE_DOUBLE",
+                          choices =  list("Single KO", "Double KO (only)", "Double KO + single KOs"), 
+                          selected = "Single KO")
+        
+        # Change Flags
         flags$flag_show_table_essentiality <- T
         flags$flag_show_table_gmcs_essentiality <- T
         flags$flag_show_table_gmcs_correlation <- T
@@ -1290,6 +1498,9 @@ server <- function(input, output, session) {
         values$O_txtout_I_TH_METHOD <- paste0("localT2 (", input$I_perc_localT2, ")")
       } else if (ResultsEssentiality$options$I_TH_METHOD=="singleTH") {
         values$O_txtout_I_TH_METHOD <- paste0("singleTH (", input$I_perc_singleTH, ")")
+      } else if (ResultsEssentiality$options$I_TH_METHOD =="fastcormics") {
+        values$O_txtout_I_GMCS_LIST <- gMCS.info$selected$fullname
+        values$O_txtout_I_TH_METHOD <- paste0("fastcormics (", input$I_perc_localT2, ")")
       }
       
       
@@ -1398,11 +1609,23 @@ server <- function(input, output, session) {
       if (flags$flag_show_table_essentiality && !is.null(values$ResultsEssentiality)){
         # browser()
         if (input$I_RESULT_TABLE_MODE=="percentage"){
-          zzz <- values$ResultsEssentiality$ratio.essential.gene
+          if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Single KO"){
+            zzz <- values$ResultsEssentiality$ratio.essential.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO (only)"){
+            zzz <- values$ResultsEssentiality$ratio.essential.pair.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO + single KOs"){
+            zzz <- values$ResultsEssentiality$ratio.essential.single.pair.combined.gene
+          }
           ResultsEssentialityTable <- datatable(zzz, filter = "top", rownames=F, selection = "single",
                                                 options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))  %>%  formatPercentage(columns = levels(values$sample.class),digits=2)
         } else {
-          zzz <- values$ResultsEssentiality$num.essential.gene
+          if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Single KO"){
+            zzz <- values$ResultsEssentiality$num.essential.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO (only)"){
+            zzz <- values$ResultsEssentiality$num.essential.pair.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO + single KOs"){
+            zzz <- values$ResultsEssentiality$num.essential.single.pair.combined.gene
+          }          
           ResultsEssentialityTable <- datatable(zzz, filter = "top", rownames=F, selection = "single",
                                                 options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))
         }
@@ -1418,9 +1641,21 @@ server <- function(input, output, session) {
     ResultsEssentialityTableToTxt <- reactive({
       if (flags$flag_show_table_essentiality && !is.null(values$ResultsEssentiality)){
         if (input$I_RESULT_TABLE_MODE=="percentage"){
-          ResultsEssentialityTableToTxt <- values$ResultsEssentiality$ratio.essential.gene
+          if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Single KO"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$ratio.essential.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO (only)"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$ratio.essential.pair.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO + single KOs"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$ratio.essential.single.pair.combined.gene
+          }
         } else {
-          ResultsEssentialityTableToTxt <- values$ResultsEssentiality$num.essential.gene
+          if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Single KO"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$num.essential.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO (only)"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$num.essential.pair.gene
+          } else if (input$I_RESULT_TABLE_SINGLE_DOUBLE=="Double KO + single KOs"){
+            ResultsEssentialityTableToTxt <- values$ResultsEssentiality$num.essential.single.pair.combined.gene
+          }
         }
       } else {
         ResultsEssentialityTableToTxt <- NULL
@@ -1548,7 +1783,7 @@ server <- function(input, output, session) {
         output$O_txtout_title_filter <- renderText({"Percentage of gene essentiality across samples in class: "})
         output$O_txtout_title_filter_bis <- renderText({"Percentage of gene essentiality across samples in class: "})
         output$O_txtout_perc_GEA_class <- renderText({"Percentage of gene essentiality in target vs non-target class"})
-
+        
       } else {
         for (ii in 1:length(levels(values$sample.class))) {
           updateSliderInput(session, paste0("I_perc_GEA_class_",ii), min = 0,
@@ -1564,7 +1799,7 @@ server <- function(input, output, session) {
         output$O_txtout_title_filter <- renderText({"Number samples in which the gene is essential in class: "})
         output$O_txtout_title_filter_bis <- renderText({"Number samples in which the gene is essential in class: "})
         output$O_txtout_perc_GEA_class <- renderText({"Number of gene essentiality in target vs non-target class"})
-        }
+      }
     })
     
     # Update the table ####
@@ -1681,41 +1916,90 @@ server <- function(input, output, session) {
     # calculate which table to show, taking into account all gMCS at a time for the filters ####
     ResultsGMCSsTable <- reactive({
       if (flags$flag_show_table_gmcs_essentiality){
-        list.gMCS.essential.aux <- values$ResultsEssentiality$list.gMCS.essential
-        # preprocess to obtain ratio or number
-        if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
-          list.gene.essential.aux <- values$ResultsEssentiality$num.essential.gene
-        } else {
-          list.gene.essential.aux <- values$ResultsEssentiality$ratio.essential.gene
-        }
         
-        if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+        # two posibilities, single KO or double KO
+        if (input$I_RESULT_TABLE_GMCS_SINGLE_DOUBLE=="Single KO"){
+          
+          ## single KO table ###
+          # preprocess to obtain ratio or number
+          list.gMCS.essential.aux <- values$ResultsEssentiality$list.gMCS.essential
+          if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+            list.gene.essential.aux <- values$ResultsEssentiality$num.essential.gene
+          } else {
+            list.gene.essential.aux <- values$ResultsEssentiality$ratio.essential.gene
+          }
+          
+          if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+            for (i in 1:length(levels(values$sample.class)))
+            {
+              list.gMCS.essential.aux[,levels(values$sample.class)[i]] = list.gMCS.essential.aux[,levels(values$sample.class)[i]] * sum(values$sample.class == levels(values$sample.class)[i])
+            }
+          }
           for (i in 1:length(levels(values$sample.class)))
           {
-            list.gMCS.essential.aux[,levels(values$sample.class)[i]] = list.gMCS.essential.aux[,levels(values$sample.class)[i]] * sum(values$sample.class == levels(values$sample.class)[i])
+            if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+              idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]) &
+                (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2])
+            } else {
+              idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]/100) &
+                (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2]/100)
+            }
+            list.gene.essential.aux <- list.gene.essential.aux[idx,]
           }
-        }
-        for (i in 1:length(levels(values$sample.class)))
-        {
+          list.gMCS.essential.aux <- list.gMCS.essential.aux %>% filter(ENSEMBL %in% list.gene.essential.aux$ENSEMBL)
+          rownames(list.gMCS.essential.aux) <- 1:nrow(list.gMCS.essential.aux)
+          print(head(rownames(list.gMCS.essential.aux)))
+          values$list.gMCS.essential.filtered <- list.gMCS.essential.aux #%>% dplyr::select(-c("task"))
+          
+        } else {
+          ## double KO table ###
+          
+          # preprocess to obtain ratio or number
+          list.gMCS.essential.aux <- values$ResultsEssentiality$list.gMCS.essential.pair
           if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
-            idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]) &
-              (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2])
+            list.gene.essential.aux <- values$ResultsEssentiality$num.essential.single.pair.combined.gene
           } else {
-            idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]/100) &
-              (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2]/100)
+            list.gene.essential.aux <- values$ResultsEssentiality$ratio.essential.single.pair.combined.gene
           }
-          list.gene.essential.aux <- list.gene.essential.aux[idx,]
+          
+          if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+            for (i in 1:length(levels(values$sample.class)))
+            {
+              list.gMCS.essential.aux[,levels(values$sample.class)[i]] = list.gMCS.essential.aux[,levels(values$sample.class)[i]] * sum(values$sample.class == levels(values$sample.class)[i])
+            }
+          }
+          for (i in 1:length(levels(values$sample.class)))
+          {
+            if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
+              idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]) &
+                (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2])
+            } else {
+              idx <- (list.gene.essential.aux[,levels(values$sample.class)[i]] >= values$filtersGEA[[i]][1]/100) &
+                (list.gene.essential.aux[,levels(values$sample.class)[i]] <= values$filtersGEA[[i]][2]/100)
+            }
+            list.gene.essential.aux <- list.gene.essential.aux[idx,]
+          }
+          
+          # filter the results
+          list.gene.essential.aux <- list.gene.essential.aux %>% mutate(g1g2 = paste0(ENSEMBL.1, "--", ENSEMBL.2))
+          list.gMCS.essential.aux <- list.gMCS.essential.aux %>% mutate(g1g2 = paste0(ENSEMBL.1, "--", ENSEMBL.2))
+          
+          list.gMCS.essential.aux <- list.gMCS.essential.aux %>% filter(g1g2 %in% list.gene.essential.aux$g1g2)
+          
+          rownames(list.gMCS.essential.aux) <- 1:nrow(list.gMCS.essential.aux)
+          print(head(rownames(list.gMCS.essential.aux)))
+          values$list.gMCS.essential.filtered <- list.gMCS.essential.aux %>% dplyr::select(-c("g1g2"))
         }
-        list.gMCS.essential.aux <- list.gMCS.essential.aux %>% filter(ENSEMBL %in% list.gene.essential.aux$ENSEMBL)
-        rownames(list.gMCS.essential.aux) <- 1:nrow(list.gMCS.essential.aux)
-        print(head(rownames(list.gMCS.essential.aux)))
-        values$list.gMCS.essential.filtered <- list.gMCS.essential.aux %>% dplyr::select(-c("task"))
+        
+        
+        
         if (input$I_RESULT_TABLE_GMCS_MODE=="number"){
           ResultsGMCSsTable <- datatable(values$list.gMCS.essential.filtered, filter = "top", selection = "single", rownames = F,
                                          options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))
         } else {
           ResultsGMCSsTable <- datatable(values$list.gMCS.essential.filtered, filter = "top", selection = "single", rownames = F,
-                                         options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))   %>%  formatPercentage(columns = levels(values$sample.class),digits=2)
+                                         options(pageLength = 10, lengthMenu = list(c(10, 20, 50, 100, -1), c("10", "20", "50", "100", "All"))))  %>%
+            formatPercentage(columns = levels(values$sample.class),digits=2)
         }
       } else {
         ResultsGMCSsTable <- NULL
@@ -1763,6 +2047,7 @@ server <- function(input, output, session) {
                    input$I_show_SYMBOL_heatmap,
                    input$I_colors_heatmap,
                    input$I_colors_colors_annotation,
+                   input$I_show_boxplots_hline,
                    input$I_isTarget_GEA_class_1, input$I_isTarget_GEA_class_2,
                    input$I_isTarget_GEA_class_3, input$I_isTarget_GEA_class_4,
                    input$I_isTarget_GEA_class_5, input$I_isTarget_GEA_class_6,
@@ -1780,38 +2065,41 @@ server <- function(input, output, session) {
                        output$O_table_essential_gmcs_selected_tasks <- renderTable({ResultsGMCSsTable_task()}, align = "l", bordered = T)
                        output$O_table_essential_gmcs_selected_mets <- renderTable({ResultsGMCSsTable_mets()}, align = "l", bordered = T)
                        # values$plot.obj <- show_heatmap()
-                       if (input$I_TH_METHOD %in% c("gmcsTH", "singleTH")){
-                         print("start ShowHeatmap_gmcsTH")
-                         # print(values$sample.class.target)
-                         values$plot.obj <- ShowHeatmap_gmcsTH(values$gene.exp,
-                                                               values$ResultsEssentiality$gene.ratio,
-                                                               gMCS.info$selected,
-                                                               values$list.gMCS.essential.filtered[input$O_table_essential_gmcs_rows_selected,],
-                                                               values$sample.class,
-                                                               values$sample.class.target,
-                                                               values$sample.cohort,
-                                                               input$I_include_boxplots_heatmap,
-                                                               input$I_show_SYMBOL_heatmap,
-                                                               input$I_colors_heatmap,
-                                                               input$I_colors_colors_annotation,
-                                                               input$I_RESULT_TABLE_GMCS_MODE)
-                         print("end ShowHeatmap_gmcsTH")
-                       } else {
-                         print("start ShowHeatmap_localT2")
-                         values$plot.obj <- ShowHeatmap_localT2(values$gene.exp,
-                                                                values$ResultsEssentiality$localT2,
-                                                                gMCS.info$selected,
-                                                                values$list.gMCS.essential.filtered[input$O_table_essential_gmcs_rows_selected,],
-                                                                values$sample.class,
-                                                                values$sample.class.target,
-                                                                values$sample.cohort,
-                                                                input$I_include_boxplots_heatmap,
-                                                                input$I_show_SYMBOL_heatmap,
-                                                                input$I_colors_heatmap,
-                                                                input$I_colors_colors_annotation,
-                                                                input$I_RESULT_TABLE_GMCS_MODE)
-                         print("end ShowHeatmap_localT2")
-                       }
+                       
+                       # saveRDS(list(gene.exp = values$gene.exp,
+                       #             gene.ratio = values$ResultsEssentiality$gene.ratio,
+                       #             localT2 = values$ResultsEssentiality$localT2,
+                       #             gMCS.info.all = gMCS.info$selected,
+                       #             gMCS.info.target = values$list.gMCS.essential.filtered[input$O_table_essential_gmcs_rows_selected,],
+                       #             sample.class = values$sample.class,
+                       #             sample.class.target = values$sample.class.target,
+                       #             sample.cohort = values$sample.cohort,
+                       #             flag_include_boxplots_heatmap = input$I_include_boxplots_heatmap,
+                       #             flag_show_SYMBOL = input$I_show_SYMBOL_heatmap,
+                       #             colors_heatmap = input$I_colors_heatmap,
+                       #             colors_annotation = input$I_colors_colors_annotation,
+                       #             TABLE_GMCS_MODE = input$I_RESULT_TABLE_GMCS_MODE),
+                       #         paste0("CODE_TEST_HEATMAP/gMCStool_heatmap_data_", format(Sys.time(), "%Y_%m_%d_%Hh%Mm%Ss"), ".RDS"))
+                       
+                       print("start ShowHeatmap")
+                       values$plot.obj <- ShowHeatmap(gene.exp = values$gene.exp,
+                                                      gene.ratio = values$ResultsEssentiality$gene.ratio,
+                                                      localT2 = values$ResultsEssentiality$localT2,
+                                                      gMCS.info.all = gMCS.info$selected,
+                                                      gMCS.info.target = values$list.gMCS.essential.filtered[input$O_table_essential_gmcs_rows_selected,],
+                                                      sample.class = values$sample.class,
+                                                      sample.class.target = values$sample.class.target,
+                                                      sample.cohort = values$sample.cohort,
+                                                      flag_include_boxplots_heatmap = input$I_include_boxplots_heatmap,
+                                                      flag_show_SYMBOL = input$I_show_SYMBOL_heatmap,
+                                                      colors_heatmap = input$I_colors_heatmap,
+                                                      colors_annotation = input$I_colors_colors_annotation,
+                                                      hline_value = input$I_show_boxplots_hline,
+                                                      TABLE_GMCS_MODE = input$I_RESULT_TABLE_GMCS_MODE)
+                       
+                           
+                       print("end ShowHeatmap")
+                       
                        if (input$I_include_boxplots_heatmap){
                          hideElement("mp4_loading")
                          showElement("mp4_heatmap")
@@ -2094,24 +2382,24 @@ server <- function(input, output, session) {
     # load the data when it is needed
     filter_DepMap_tables <- function(){
       # browser()
-
+      
       values$DepMap.info.filtered$DepMapEssentialityByGene <- readRDS(paste0("./Data/DepMap_Data/DepMapEssentialityByGene_",
                                                                              input$I_DepMap_database,".RDS")) %>%
         # filter(essentiality.database==input$I_DepMap_database) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-
+      
       values$DepMap.info.filtered$DepMapExpressionByGene <- readRDS(paste0("./Data/DepMap_Data/DepMapExpressionByGene_",
                                                                            input$I_DepMap_GMCS_LIST,"_",input$I_DepMap_unit,".RDS")) %>%
         # filter(gMCS.database==input$I_DepMap_GMCS_LIST) %>%
         # filter(UNIT==input$I_DepMap_unit) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-
+      
       values$DepMap.info.filtered$DepMapCorrelationByGene <- readRDS("./Data/DepMap_Data/DepMapCorrelationByGene.RDS") %>%
         filter(gMCS.database==input$I_DepMap_GMCS_LIST) %>%
         filter(essentiality.database==input$I_DepMap_database) %>%
         filter(UNIT==input$I_DepMap_unit) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)
-
+      
       values$DepMap.info.filtered$DepMapGeneExpression <- readRDS(file = paste0("./Data/DepMap_Data/DepMapEssentialityByGene_",input$I_DepMap_database,".RDS")) %>%
         # filter(UNIT==input$I_DepMap_unit) %>%
         filter(ENSEMBL %in% gMCS.info$selected$genes.gMCSs.ENSEMBL)

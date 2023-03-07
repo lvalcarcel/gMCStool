@@ -6,13 +6,17 @@ pkgsNeeded <- c('shiny','shinyjs','shinythemes','shinyWidgets', 'rmarkdown',
                 'shinycssloaders', 'shinydashboard', 'shinydashboardPlus',
                 'shinyalert', 'shinyhelper', 'DT', 'shinyTree', 
                 
-                'foreach', 'doParallel', 'parallel', 'doSNOW', 'snow', 'pbapply',
+                'foreach', 'doParallel', 'parallel', 'doSNOW', 'doParallel', 'snow', 'pbapply',
                 'data.table', 'dplyr', 'rstatix',
                 'Matrix', 'reshape2', 'gridExtra', 'pheatmap', 
                 'ggplot2', 'ggpubr', 'ggrepel', 
                 'scales', 'colorspace', 'circlize', 
                 # 'BiocManager', 
-                'openxlsx', 'viridis', 'latex2exp', 'benchmarkme')
+                'openxlsx', 'viridis', 'latex2exp', 'benchmarkme',
+                
+                'tidyverse', 'gRbase', 'Rfast2', 'parallel', 'ParallelLogger',
+                'pbmcapply',
+                'doParallel', 'foreach', 'parallelly', 'future', 'future.apply') 
                 
 
 pkgsInstalled <-  pkgsNeeded %in% rownames(installed.packages())
@@ -20,12 +24,12 @@ if (length(pkgsNeeded[!pkgsInstalled]) > 0){
   install.packages(pkgsNeeded[!pkgsInstalled], dependencies = T, repos = "https://cloud.r-project.org")
 }
 
-# # Bioconductor's packages
-# pkgsNeeded <- c("limma", "tximport")
-# pkgsInstalled <-  pkgsNeeded %in% rownames(installed.packages())
-# if (length(pkgsNeeded[!pkgsInstalled]) > 0){
-#   BiocManager::install(pkgsNeeded[!pkgsInstalled])
-# }
+# Bioconductor's packages
+pkgsNeeded <- c("gRbase", "graph")
+pkgsInstalled <-  pkgsNeeded %in% rownames(installed.packages())
+if (length(pkgsNeeded[!pkgsInstalled]) > 0){
+  BiocManager::install(pkgsNeeded[!pkgsInstalled])
+}
 
 
 library(shiny)
@@ -59,18 +63,36 @@ library(rstatix)
 library(dplyr)
 #library(feather)
 
+library(tidyverse)
+library(gRbase)
+library(Rfast2)
+library(parallel)
+library(ParallelLogger)
+library(doParallel)
+library(foreach)
+library(parallelly)
+library(future)
+library(future.apply)
+
 
 
 
 
 # load all the scrips needed in the server #### 
-source("fun-CalculateEssentialGenes_gmcsTH.R")
-source("fun-CalculateEssentialGenes_localT2.R")
-source("fun-CalculateEssentialGenes_singleTH.R")
+# source("fun-CalculateEssentialGenes_gmcsTH.R")
+# source("fun-CalculateEssentialGenes_localT2.R")
+# source("fun-CalculateEssentialGenes_singleTH.R")
+
+source("fun-CalculateEssentialGenes.R")
+source("fun-CalculateGenesOnOff.R")
+source("fun-SimplifyGMCS.R")
+
 source("fun-SaveResultsInExcel.R")
-source("fun-ShowHeatmap_gmcsTH.R")
-source("fun-ShowHeatmap_localT2.R")
+source("fun-ShowHeatmap.R")
+
+
 source("fun-ShowDotplot_DepMap.R")
+
 
 
 

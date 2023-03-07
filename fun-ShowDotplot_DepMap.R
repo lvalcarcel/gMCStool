@@ -17,7 +17,7 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
   if (by_gMCS) {
     gmcs.ENSEMBL <- strsplit(gMCS.info.all$gMCSs.ENSEMBL.txt[as.numeric(as.character(gene.target.info$gMCS))],'--')[[1]]
     gmcs.ENSEMBL <- setdiff(gmcs.ENSEMBL, gene.ENSEMBL)
-    gmcs.SYMBOL <- strsplit(gMCS.info.all$gMCSs.ENSEMBL.txt.SYMBOL[as.numeric(as.character(gene.target.info$gMCS))],'--')[[1]]
+    gmcs.SYMBOL <- strsplit(gMCS.info.all$gMCSs.SYMBOL.txt[as.numeric(as.character(gene.target.info$gMCS))],'--')[[1]]
     gmcs.SYMBOL <- setdiff(gmcs.SYMBOL, gene.SYMBOL)
     
     sdf <- reshape2::dcast(DepMap.info.all$DepMapGeneExpression %>% filter(UNIT==database_unit), ENSEMBL~DepMap_ID, value.var = "logTPM", fun.aggregate = sum)
@@ -48,7 +48,7 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
     # define the gMCSs in which this gene participates
     idx <- sdf$gmcs.idx
     if (flag_show_SYMBOL) {
-      gMCSs.SYMBOL <- gMCS.info.all$gMCSs.ENSEMBL.txt.SYMBOL[idx]
+      gMCSs.SYMBOL <- gMCS.info.all$gMCSs.SYMBOL.txt[idx]
       gMCSs.SYMBOL <- strsplit(gMCSs.SYMBOL, "--")
       
       gMCSs.SYMBOL <- lapply(gMCSs.SYMBOL, function(x){x[x!=gene.SYMBOL]})
