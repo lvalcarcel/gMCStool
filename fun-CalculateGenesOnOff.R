@@ -66,9 +66,6 @@ CalculateGenesOnOff <- function(gene.exp, # gene expression
     # function to search the maximum expressed gene
     obtain_max_gene_gMCS <- function(gmcs, gMCSs.ENSEMBL.exp){
       aux <- gMCSs.ENSEMBL.exp[gmcs]
-      # aux2 <- which.max(aux)
-      # aux2 <- which.max(aux)
-      # aux <- gmcs[aux2]
       aux <- gmcs[which.max(aux)]
       return(aux)
     }

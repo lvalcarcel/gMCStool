@@ -54,42 +54,9 @@ RealTimeTables_mp4 = T
 RealTimeTables_mp5 = F
 
 # # Load data  ####
-# # START1 <- Sys.time()
-# gMCS.info.raw <- list()
-# gMCS.info.raw[["EssentialTasks_CultureMedium"]] <- new.env()
-# load("Data/gMCSs_EssentialTasks_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_CultureMedium"]])
-# gMCS.info.raw[["EssentialTasks_FullMedium"]] <- new.env()
-# load("Data/gMCSs_EssentialTasks_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["EssentialTasks_FullMedium"]])
-# gMCS.info.raw[["Only_CultureMedium"]] <- new.env()
-# load("Data/gMCSs_CultureBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_CultureMedium"]])
-# gMCS.info.raw[["Only_FullMedium"]] <- new.env()
-# load("Data/gMCSs_FullBiomass_combined_HumanGEMv1.4.0_ENSEMBL.rdata", envir = gMCS.info.raw[["Only_FullMedium"]])
-# gMCS.info.raw <- lapply(gMCS.info.raw, as.list)
-# # remove unnecessary field (gMCS.ENSEMBL.list)
-# gMCS.info.raw <- lapply(gMCS.info.raw, function(x){x[c("gMCSs.ENSEMBL.txt", "table.gMCSs", "gMCSs.ENSEMBL.length",
-#                                                        "gMCSs.ENSEMBL.mat", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM",
-#                                                        "gMCSs.ENSEMBL.txt.SYMBOL", "gMCSs.ENSEMBL")]})
-# 
-# # generate field with reduced information
-# gMCS.info.raw[["Custom_CultureMedium"]] <- gMCS.info.raw[["EssentialTasks_CultureMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
-# gMCS.info.raw[["Custom_FullMedium"]] <- gMCS.info.raw[["EssentialTasks_FullMedium"]][c("table.gMCSs", "genes.gMCSs.ENSEMBL", "table.genes.HumanGEM")]
-# 
-# gMCS.info.raw[["EssentialTasks_CultureMedium"]]$fullname <- "Essential Tasks and Growth on Ham's medium"
-# gMCS.info.raw[["EssentialTasks_FullMedium"]]$fullname <- "Essential Tasks and Growth on unconstrained medium"
-# gMCS.info.raw[["Only_CultureMedium"]]$fullname <- "Only growth on Ham's medium"
-# gMCS.info.raw[["Only_FullMedium"]]$fullname <- "Only growth on unconstrained medium"
-# gMCS.info.raw[["Custom_CultureMedium"]]$fullname <- "Selected metabolic tasks and growth on Ham's medium"
-# gMCS.info.raw[["Custom_FullMedium"]]$fullname <- "Selected metabolic tasks and growth on unconstrained medium"
-# 
-# END1 <- Sys.time()
-# 
-# save(gMCS.info.raw, file = "./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.rdata", compress = "xz", compression_level = 9)
-
-
-# Load data  ####
-START2 <- Sys.time()
+# START2 <- Sys.time()
 load("./Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL.Rdata")
-END2 <- Sys.time()
+# END2 <- Sys.time()
 
 
 format(object.size(gMCS.info.raw), units = "auto")
@@ -104,30 +71,8 @@ gMCS.info.raw.rawData <- readRDS("Data/gMCSs_all_cases_HumanGEMv1.4.0_ENSEMBL_ra
 metsBiomass <- readRDS("Data/Metabolites_of_interest_gMCS_biomass_HumanGEMv1.4.0.RDS")
 
 
-# START3 <- Sys.time()
-# DepMap.info.all <- new.env()
-# load("Data/DepMap_info_genes_gMCS_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
-# load("Data/DepMap_correlation_genes_HumanGEMv1.4.0.RData", envir = DepMap.info.all)
-# DepMap.info.all <- as.list(DepMap.info.all)
-# DepMap.info.all <- DepMap.info.all[setdiff(names(DepMap.info.all), "DepMapEssentiality")]
-# DepMap.info.all$DepMapGeneExpression <- reshape2::melt(DepMap.info.all$DepMapGeneExpression)
-# colnames(DepMap.info.all$DepMapGeneExpression) <- c("ENSEMBL", "SYMBOL","DepMap_ID", "logTPM", "UNIT")
-# DepMap.info.all$DepMapGeneExpression <- DepMap.info.all$DepMapGeneExpression %>% 
-#   mutate(ENSEMBL = as.factor(ENSEMBL)) %>% mutate(SYMBOL = as.factor(SYMBOL)) %>% 
-#   mutate(DepMap_ID = as.factor(DepMap_ID)) %>% mutate(UNIT = as.factor(UNIT))
-# DepMap.info.all <- lapply(DepMap.info.all, as.data.frame)
-# 
-
 DepMap.info.all <- list("dictionary.CCLE" =  readRDS("./Data/DepMap_Data/dictionary.CCLE.RDS"),
                         "DepMapCorrelationByGene" =  readRDS("./Data/DepMap_Data/DepMapCorrelationByGene.RDS"))
-# END3 <- Sys.time()
-
-
-# END1 - START1
-# END2 - START2
-# END3 - START3
-
-# (END1 - START1) + END3 - START3 
 
 print(paste0("running gMCStool with ",nWorkers," cores and ",round(nBytesRAM/1024/1024/1024,1)," GBs of RAM"))
 
@@ -662,12 +607,12 @@ server <- function(input, output, session) {
                          theme(text = element_text(size = 16, face = "bold"),
                                axis.text = element_text(size = 16, face = "bold"),
                                axis.text.x = element_text(angle = 75, vjust=1, hjust = 1),
-                               panel.background = element_blank() # bg of the panel
-                               , plot.background = element_blank() # bg of the plot
-                               , panel.grid.major = element_blank() # get rid of major grid
-                               , panel.grid.minor = element_blank() # get rid of minor grid
-                               , legend.background = element_blank() # get rid of legend bg
-                               , legend.box.background = element_blank() # get rid of legend panel bg
+                               panel.background = element_blank(),  # bg of the panel
+                               plot.background = element_blank(),  # bg of the plot
+                               panel.grid.major = element_blank(),  # get rid of major grid
+                               panel.grid.minor = element_blank(),  # get rid of minor grid
+                               legend.background = element_blank(),  # get rid of legend bg
+                               legend.box.background = element_blank() # get rid of legend panel bg
                          )
                        if (any(grepl("growth", selected_tasks, ignore.case = T))) {
                          values$plot.5.barchart.merged.gmcss <- values$plot.5.barchart.merged.gmcss +

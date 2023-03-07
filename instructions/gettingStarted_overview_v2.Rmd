@@ -1,0 +1,48 @@
+---
+title: "gettingStarted_overview_v1"
+author: "Luis V. Valcárcel"
+date: "20th July 2021"
+output:
+  html_document:
+  css: style.css
+---
+
+<p style="text-align:center;"><img src="logo_gMCStool_2.png" alt="Welcome" style="width: 50%"/></p>
+
+
+<center>
+
+#### *"A tool for discovering essential genes in cancer metabolism"*
+</center>
+
+
+<br>
+## Welcome!
+
+#### We present gMCStool, a user-friedly web-tool to predict essential genes in the latest reconstruction of the human metabolism, [Human1](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7331181/), freely available in [GitHub](https://github.com/SysBioChalmers/Human-GEM). 
+#### We have chosen the game 'jenga' as the icon of our tool, because the jenga tower falls when you take out the most vulnerable part of the structure. In our case, we are searching for the most vulnerable parts of the metabolism of cancer cells in order to disrupt cellular proliferation. 
+#### In order to fin metabolic vulnerabilities in cancer cells, we employ the concept of genetic Minimal Cut Sets ([gMCSs](https://academic.oup.com/bioinformatics/article/35/3/535/5056753)), a metabolic network-based approach to synthetic lethality, and RNA-seq data. 
+<br>
+
+#### gMCStool has been developed to achieve the following analysis:
+
+#### **1. Find essential genes for cancer metabolism based on RNA-seq data.**
+
+#### **2. Predict putative companion biomarkers for predicted essential genes.** 
+
+#### **3. Identify essential tasks or essential metabolites associated with predicted essential genes.**
+
+<br>
+
+#### gMCStool has been developed using R and Shiny. 
+#### The databases and source code are available at [GitHub](https://github.com/lvalcarcel/gMCStool)
+
+
+<center>
+<br>
+<!-- #### **The data is already loaded in the app and ready for analysis** -->
+<br>
+</center>
+
+
+
