@@ -51,10 +51,10 @@ tabPanel(title = "3. Predict Essential Genes and DKOs",
                         h3("Gene expression thresholding method"),
                         radioButtons(inputId = "I_TH_METHOD", label = "Select one:", 
                                      # change the comments to implement singleTH
-                                     choiceValues = list("gmcsTH", "localT2","singleTH", "fastcormics"),
-                                     choiceNames =  list("gmcsTH", "localT2","singleTH", "fastcormics"),
-                                     # choiceValues = list("gmcsTH", "localT2"), 
-                                     # choiceNames =  list("gmcsTH", "localT2"),
+                                     # choiceValues = list("gmcsTH", "localT2","singleTH", "fastcormics"),
+                                     # choiceNames =  list("gmcsTH", "localT2","singleTH", "fastcormics"),
+                                     choiceValues = list("gmcsTH", "localT2"),
+                                     choiceNames =  list("gmcsTH", "localT2"),
                                      selected = "gmcsTH"),
                         
                         # depending on the thresholding technology, show a different menu

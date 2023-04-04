@@ -50,8 +50,6 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   ####        define highly and lowly expressed genes         ####
   ################################################################
   
-  # source("fun-CalculateGenesOnOff.R")
-  
   if (is.null(gene.ON.OFF)){
     # only calculate if the data is not provided
     GeneResults <- CalculateGenesOnOff(gene.exp = gene.exp, # gene expression
@@ -89,7 +87,6 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     gMCSs.ENSEMBL.txt.list <- lapply(strsplit(gMCSs.ENSEMBL.txt, '--'),sort) # array of unique gMCSs along task, but separated
     gMCSs.ENSEMBL.txt.list.num <- lapply(gMCSs.ENSEMBL.txt.list, match, genes.gMCSs.ENSEMBL) # array of unique gMCSs along task, but separated
   }
-
   table.genes.HumanGEM <- gMCS.info$table.genes.HumanGEM  # table that relates genes in ENSEMBL, SYMBOL and ENTREZ_ID
   
   # ensure that it contains all the genes in the desired order for the calculation
@@ -99,7 +96,6 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   ####        single and double essential genes               ####
   ################################################################
   
-  # browser()
   index_gmcs_length_1 <- as.numeric(which(rowSums(gMCSs.ENSEMBL.mat)==1))
   
   genes.ENSEMBL.essential <- gMCSs.ENSEMBL.txt[index_gmcs_length_1]
@@ -112,7 +108,6 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   }
   
   # define a set for single gene KO ### 
-  
   num.essential.gene <- as.data.frame(matrix(0,nrow = length(genes.gMCSs.ENSEMBL),ncol = length(levels(sample.class))+2))
   colnames(num.essential.gene) <- c("gen","num.gMCS",levels(sample.class))
   rownames(num.essential.gene) <- genes.gMCSs.ENSEMBL
@@ -145,7 +140,7 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     
     genes.double.gMCSs.ENSEMBL.counts <- data.frame(gen1 = genes.double.gMCSs.ENSEMBL[,1], gen2 = genes.double.gMCSs.ENSEMBL[,2]) %>% count(gen1, gen2)
     
-    MagicNumber <- 10^ceiling(log10(length(genes.gMCSs.ENSEMBL))) # this magic number allow us to transform the gene pair into a single number, being g1_idx*MagicNumber + g2_idx
+    MagicNumber <- 10^ceiling(log10(length(genes.gMCSs.ENSEMBL)))
     
     genes.double.gMCSs.ENSEMBL <- genes.double.gMCSs.ENSEMBL.counts[,1:2]
     genes.double.gMCSs.ENSEMBL[,3] <- match(genes.double.gMCSs.ENSEMBL[,1], genes.gMCSs.ENSEMBL)
@@ -175,15 +170,11 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     list.pairgene.of.gMCS.by.sample.aux <- list()  # auxiliary list
   }
   
-  
-  # mat.essential.gene.2 <- mat.essential.gene
-  # mat.essential.pair.gene.2 <- mat.essential.pair.gene
-  
-  # browser()
   genes.in.gmcs.over.th <- gMCSs.ENSEMBL.mat[,genes.gMCSs.ENSEMBL] %*% as.matrix(gene.ON.OFF)*1
-
-  # store as a binary matrix, and transpose (save time for calculations)
-  gMCSs.ENSEMBL.mat.binary <- t(gMCSs.ENSEMBL.mat>0.5)
+  # gene.ratio.log2 <- log2(gene.ratio)[genes.gMCSs.ENSEMBL,]
+  
+  # store as a binary matrix
+  gMCSs.ENSEMBL.mat.binary <- gMCSs.ENSEMBL.mat>0.5
   
   ## Generate functions to calculate essential genes
   fun_single_KO <- function(i){
@@ -192,8 +183,12 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     # genes that are highly expressed for the patient
     gene.up.patient <- which(gene.ON.OFF[,i], useNames = FALSE)  
     # the intersection inform us of the active genes in the gmcs with highly expressed genes
-    idx.3 <- which(gMCSs.ENSEMBL.mat.binary[gene.up.patient, idx.1], arr.ind = T, useNames = FALSE)
-    idx.3 <- gene.up.patient[idx.3[,1]]
+    idx.3.bis <- which(t(gMCSs.ENSEMBL.mat.binary[idx.1, gene.up.patient]), arr.ind = T, useNames = FALSE)
+    idx.3.bis <- gene.up.patient[idx.3.bis[,1]]
+    idx.3 <- idx.3.bis
+    # idx.3 <- vapply(gMCSs.ENSEMBL.txt.list.num[idx.1], Rfast2::Intersect, FUN.VALUE = numeric(1), gene.up.patient )
+    # assertthat::are_equal(idx.3.bis, idx.3)
+    # print(sum(idx.3.bis != idx.3))
     # essentiality matrixes
     return(data.frame(gMCS = idx.1,
                       ENSEMBL = idx.3,
@@ -208,7 +203,7 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     # genes that are highly expressed for the patient
     gene.up.patient <- which(gene.ON.OFF[,i], useNames = FALSE)  
     # the intersection inform us of the active genes in the gmcs with highly expressed genes
-    idx.4 <- which(gMCSs.ENSEMBL.mat.binary[gene.up.patient, idx.2], arr.ind = T, useNames = FALSE)
+    idx.4 <- which(t(gMCSs.ENSEMBL.mat.binary[idx.2, gene.up.patient]), arr.ind = T)
     idx.4 <- matrix(idx.4[,1], nrow = 2, byrow = F)
     idx.4 <- matrix(c(gene.up.patient[idx.4[1,]], gene.up.patient[idx.4[2,]]), ncol = 2, byrow = F)
     # remove genes that are considered as essential for that sample
@@ -216,12 +211,12 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     idx.aux <- idx.aux | ((idx.4[,1] %in% genes.ENSEMBL.essential.num) | (idx.4[,2] %in% genes.ENSEMBL.essential.num))
     idx.aux <- !(idx.aux)
     # Transform into double gene index
-    # idx.4 <- apply(idx.4, 1, paste, collapse = "_")
     idx.4 <- idx.4[,1]*MagicNumber + idx.4[,2]
     idx.4 <- matrix(c(match(idx.4, genes.double.gMCSs.ENSEMBL[,6]), 
                       match(idx.4, genes.double.gMCSs.ENSEMBL[,7])),
                     ncol = 2, byrow = F, nrow = length(idx.4))
-    idx.4 <- rowSums(idx.4, na.rm = T) # faster than apply(x,1,sum,na.rm = T)
+    # idx.4 <- apply(idx.4, 1, sum, na.rm = T)
+    idx.4 <- rowSums(idx.4, na.rm = T)
     # essentiality matrixes
     # here we store the gmcs that are responsible of the essentiality
     return(data.frame(gMCS = idx.2[idx.aux],
@@ -278,6 +273,7 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     
     print(paste("Calculating essential gMCS using multicore processing with", parallel.nCores.2, "cores for each gene for",ncol(gene.exp), "samples:"))
     list.gene.of.gMCS.by.sample.aux <- pbmcapply::pbmclapply(1:ncol(gene.ON.OFF),
+                                                             # fun_single_KO, gMCSs.ENSEMBL.txt.list.num, 
                                                              fun_single_KO, 
                                                              mc.cores = parallel.nCores.2,
                                                              mc.preschedule = T,
@@ -286,6 +282,7 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
       
       print(paste("Calculating essential gMCS using multicore processing with", parallel.nCores.2, "cores for each pair of genes for",ncol(gene.exp), "samples:"))
       list.pairgene.of.gMCS.by.sample.aux <- pbmcapply::pbmclapply(1:ncol(gene.ON.OFF),
+                                                                   # fun_double_KO, gMCSs.ENSEMBL.txt.list.num, genes.double.gMCSs.ENSEMBL[,6:7],
                                                                    fun_double_KO,
                                                                    mc.cores = parallel.nCores.2,
                                                                    mc.preschedule = T,
@@ -308,7 +305,8 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   list.gene.of.gMCS.by.sample.aux <- split(list.gene.of.gMCS.by.sample.aux, #%>% mutate(ENSEMBL = rownames(mat.essential.gene)[ENSEMBL]),
                                            ~ENSEMBL)
   setTxtProgressBar(pb, pb_cont); pb_cont <- pb_cont + 1
-
+  # sum(abs(mat.essential.gene.2 - mat.essential.gene))
+  
   if (calculateDoubleKO){ 
     list.pairgene.of.gMCS.by.sample.aux <- do.call(rbind, list.pairgene.of.gMCS.by.sample.aux)
     
@@ -317,7 +315,8 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     
     list.pairgene.of.gMCS.by.sample.aux <- split(list.pairgene.of.gMCS.by.sample.aux, #%>% mutate(ENSEMBL = rownames(mat.essential.gene)[ENSEMBL]),
                                                  ~ENSEMBL)
-
+    # sum(abs(mat.essential.pair.gene.2 - mat.essential.pair.gene))
+    
     setTxtProgressBar(pb, pb_cont); pb_cont <- pb_cont + 1
   }
   
@@ -363,6 +362,7 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   num.essential.gene$num.gMCS <- colSums(gMCSs.ENSEMBL.mat[,genes.gMCSs.ENSEMBL])
   
   if (length(levels(sample.class))>1) {
+    # num.essential.gene[,levels(sample.class)] <- t(apply(mat.essential.gene, 1, function(x){rowsum((x>0)*1, sample.class)}))
     num.essential.gene[,levels(sample.class)] <- t(rowsum(t(as.matrix(mat.essential.gene>0)*1), sample.class))
   } else {
     num.essential.gene[,levels(sample.class)] <- rowSums(mat.essential.gene>0)
@@ -463,12 +463,9 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
     setTxtProgressBar(pb, pb_cont); pb_cont <- pb_cont + 1
     
     # Add the gene information (symbol, isEssentialPair)
-    
-    
     colnames(num.essential.pair.gene)[colnames(num.essential.pair.gene)=="gen1"] <- "ENSEMBL.1"
     colnames(num.essential.pair.gene)[colnames(num.essential.pair.gene)=="gen2"] <- "ENSEMBL.2"
     
-    # num.essential.pair.gene.2 <- num.essential.pair.gene
     num.essential.pair.gene <- merge(table.genes.HumanGEM %>% as.data.frame() %>% dplyr::select(ENSEMBL, SYMBOL) %>% dplyr::rename(ENSEMBL.2 = ENSEMBL) %>% dplyr::rename(SYMBOL.2 = SYMBOL),
                                      num.essential.pair.gene %>% as.data.frame())
     num.essential.pair.gene <- merge(table.genes.HumanGEM %>% as.data.frame() %>% dplyr::select(ENSEMBL, SYMBOL) %>% dplyr::rename(ENSEMBL.1 = ENSEMBL) %>% dplyr::rename(SYMBOL.1 = SYMBOL),

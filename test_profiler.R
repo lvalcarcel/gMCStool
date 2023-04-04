@@ -11,6 +11,9 @@ setwd(dirname(getActiveDocumentContext()$path)) # Change into file directory
 
 source("app.R")
 
+runApp(app)
+
+
 
 # DepMap.info.all.2 <- DepMap.info.all
 # 

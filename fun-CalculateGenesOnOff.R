@@ -1,6 +1,3 @@
-
-
-
 CalculateGenesOnOff <- function(gene.exp, # gene expression
                                 gMCS.info, # gMCS information
                                 sample.class, sample.cohort = NULL, #metadata of the samples
