@@ -497,9 +497,9 @@ server <- function(input, output, session) {
           return(z)})
         print(sapply(gMCS.info$selected$gMCSs.ENSEMBL,dim))
         gMCS.info$selected$gMCSs.ENSEMBL.txt <- gMCS.info$selected$gMCSs.ENSEMBL.txt[idx2]
-        gMCS.info$selected$gMCSs.ENSEMBL.length <- gMCS.info$selected$gMCSs.ENSEMBL.length[idx2]
         # gMCS.info$selected$gMCSs.ENSEMBL.list <- gMCS.info$selected$gMCSs.ENSEMBL.list[idx2]
         gMCS.info$selected$gMCSs.ENSEMBL.mat <- gMCS.info$selected$gMCSs.ENSEMBL.mat[idx2,]
+        gMCS.info$selected$gMCSs.ENSEMBL.length <- rowSums(gMCS.info$selected$gMCSs.ENSEMBL.mat)
         gMCS.info$selected$gMCSs.SYMBOL.txt <- gMCS.info$selected$gMCSs.SYMBOL.txt[idx2]
         
         # change a little bit the gMCS table for the new index
@@ -2463,19 +2463,7 @@ server <- function(input, output, session) {
             dplyr::filter(DepMap_ID %in% aux1)
           
           print("Calculate new correlations based on selected data: 3/4")
-          # END[2] <- Sys.time()
-          
-          # browser()
-          # aux <- merge(na.omit(aux2) %>% select("DepMap_ID", "essentiality_score","ENSEMBL"),
-          #              na.omit(aux3) %>% select("DepMap_ID", "logTPM",  "ENSEMBL")) %>%
-          #   as_tibble() %>% 
-          #   group_by(ENSEMBL) %>%
-          #   # multidplyr::partition(cluster = cluster_multidplyr) %>% #cluster_library("dplyr") %>% cluster_library("rstatix") %>%
-          #   cor_test(essentiality_score, logTPM) %>% adjust_pvalue(method = "fdr") %>%
-          #   # collect() %>% as_tibble() %>%
-          #   rename(ENSEMBL = ENSEMBL) %>% rename(rho = cor) %>% rename(p.value = p)  %>%
-          #   dplyr::select(ENSEMBL, rho, p.value, p.adj)
-          
+
           aux <- merge(na.omit(aux2) %>% select("DepMap_ID", "essentiality_score","ENSEMBL"),
                        na.omit(aux3) %>% select("DepMap_ID", "logTPM",  "ENSEMBL")) 
           aux <- split(aux, as.character(aux$ENSEMBL))
@@ -2656,7 +2644,9 @@ server <- function(input, output, session) {
                        } else { 
                          aux <- values$list.corr.essential.filtered[input$O_table_essential_gmcs_bis_rows_selected,]
                        }
+                       
                        print("start ShowDotplot_DepMap")
+                       # browser()
                        values$plot.obj.DepMap <- ShowDotplot_DepMap(DepMap.info.all = values$DepMap.info.filtered,
                                                                     gMCS.info.all = gMCS.info$selected,
                                                                     gmcs_database = input$I_DepMap_GMCS_LIST,

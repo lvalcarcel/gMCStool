@@ -3,7 +3,7 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
                                flag_database_filter_show_only, flag_LinearRegression = T, flag_show_SYMBOL = T,
                                flag_color_by_gMCS = F, database_unit){
   
-  if(gene.target.info$isEssential) { return(ggplot() + theme_void()) }
+  # browser()
   
   # remove empty database
   # database_filter_selected <- database_filter_selected[database_filter_selected != "---"]
@@ -13,6 +13,9 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
   gene.SYMBOL <- gene.target.info$SYMBOL
   
   
+  # test the data
+  if(gene.ENSEMBL %in% gMCS.info.all$gMCSs.ENSEMBL.txt) { return(ggplot() + theme_void()) }
+  # if(sum(gMCS.info.all$gMCSs.ENSEMBL.max[,gene.ENSEMBL])==1){by_gMCS = F; flag_color_by_gMCS = F}
   
   if (by_gMCS) {
     gmcs.ENSEMBL <- strsplit(gMCS.info.all$gMCSs.ENSEMBL.txt[as.numeric(as.character(gene.target.info$gMCS))],'--')[[1]]
@@ -48,14 +51,17 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
     # define the gMCSs in which this gene participates
     idx <- sdf$gmcs.idx
     if (flag_show_SYMBOL) {
+      # browser()
       gMCSs.SYMBOL <- gMCS.info.all$gMCSs.SYMBOL.txt[idx]
-      gMCSs.SYMBOL <- strsplit(gMCSs.SYMBOL, "--")
+      gMCSs.SYMBOL <- paste0(gMCSs.SYMBOL, collapse = "--")
+      gMCSs.SYMBOL <- unique(strsplit(gMCSs.SYMBOL, "--"))
       
       gMCSs.SYMBOL <- lapply(gMCSs.SYMBOL, function(x){x[x!=gene.SYMBOL]})
       sdf$gMCSs.to.show <- unlist(lapply(gMCSs.SYMBOL, aux.fun))
     } else {
       gMCSs.ENSEMBL <- gMCS.info.all$gMCSs.ENSEMBL.txt[idx]
-      gMCSs.ENSEMBL <- strsplit(gMCSs.ENSEMBL, "--")
+      gMCSs.ENSEMBL <- paste0(gMCSs.ENSEMBL, collapse = "--")
+      gMCSs.ENSEMBL <- unique(strsplit(gMCSs.ENSEMBL, "--"))
       
       gMCSs.ENSEMBL <- lapply(gMCSs.ENSEMBL, function(x){x[x!=gene.ENSEMBL]})
       
