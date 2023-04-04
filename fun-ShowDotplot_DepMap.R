@@ -14,7 +14,7 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
   
   
   # test the data
-  if(gene.ENSEMBL %in% gMCS.info.all$gMCSs.ENSEMBL.txt) { return(ggplot() + theme_void()) }
+  if(gene.ENSEMBL %in% gMCS.info.all$gMCSs.ENSEMBL.txt) { return(tibble(x = 1, y = 1) %>% ggplot(aes(x, y)) + theme_void() + geom_text(label ="This is an essential gene, it has no partner")) }
   # if(sum(gMCS.info.all$gMCSs.ENSEMBL.max[,gene.ENSEMBL])==1){by_gMCS = F; flag_color_by_gMCS = F}
   
   if (by_gMCS) {
@@ -53,15 +53,13 @@ ShowDotplot_DepMap <- function(DepMap.info.all, gMCS.info.all, gmcs_database, ge
     if (flag_show_SYMBOL) {
       # browser()
       gMCSs.SYMBOL <- gMCS.info.all$gMCSs.SYMBOL.txt[idx]
-      gMCSs.SYMBOL <- paste0(gMCSs.SYMBOL, collapse = "--")
-      gMCSs.SYMBOL <- unique(strsplit(gMCSs.SYMBOL, "--"))
+      gMCSs.SYMBOL <- lapply(gMCSs.SYMBOL, function(x){unlist(strsplit(x, "--"))})
       
       gMCSs.SYMBOL <- lapply(gMCSs.SYMBOL, function(x){x[x!=gene.SYMBOL]})
       sdf$gMCSs.to.show <- unlist(lapply(gMCSs.SYMBOL, aux.fun))
     } else {
       gMCSs.ENSEMBL <- gMCS.info.all$gMCSs.ENSEMBL.txt[idx]
-      gMCSs.ENSEMBL <- paste0(gMCSs.ENSEMBL, collapse = "--")
-      gMCSs.ENSEMBL <- unique(strsplit(gMCSs.ENSEMBL, "--"))
+      gMCSs.ENSEMBL <- lapply(gMCSs.ENSEMBL, function(x){unlist(strsplit(x, "--"))})
       
       gMCSs.ENSEMBL <- lapply(gMCSs.ENSEMBL, function(x){x[x!=gene.ENSEMBL]})
       
