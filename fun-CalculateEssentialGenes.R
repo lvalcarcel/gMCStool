@@ -299,7 +299,8 @@ CalculateEssentialGenes <- function(gene.exp, # gene expression
   # Fill the matrix
   list.gene.of.gMCS.by.sample.aux <- do.call(rbind, list.gene.of.gMCS.by.sample.aux)
   
-  aux <- list.gene.of.gMCS.by.sample.aux %>% dplyr::select(ENSEMBL, sample) %>% unique() %>% as.matrix()
+  aux <- list.gene.of.gMCS.by.sample.aux %>% dplyr::select(ENSEMBL, sample) %>% 
+    as.data.frame() %>% unique() %>% as.matrix()
   mat.essential.gene[aux] <- 1
   
   list.gene.of.gMCS.by.sample.aux <- split(list.gene.of.gMCS.by.sample.aux, #%>% mutate(ENSEMBL = rownames(mat.essential.gene)[ENSEMBL]),

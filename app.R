@@ -36,8 +36,8 @@ rm(list = ls())
 
 source("helpers.R") # Here, all the libraries and scripts needed are loaded
 
-if (TRUE){ # set to false if this is goinf to be run in AWS
-  nWorkers = parallel::detectCores()-2  # Define maximum number of workers for parallel processing
+if (FALSE){ # set to false if this is goinf to be run in AWS
+  nWorkers = max(8,parallel::detectCores()-2)  # Define maximum number of workers for parallel processing
   nBytesRAM = 4*1024*1024*1024
   nBytesRAM_OS = 8*1024*1024*1024
   nBytesRAM = max(nBytesRAM, benchmarkme::get_ram()-nBytesRAM_OS)  # Define maximum RAM for shiny
